@@ -4,7 +4,7 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/auth.routes");
 const leaderboardRoutes = require("./routes/leaderboard.routes");
-
+const aiRoutes = require("./routes/ai.routes");
 // database
 const connectDB = require("./config/db");
 connectDB();
@@ -22,7 +22,7 @@ app.use(express.json());
 // routes
 app.use("/api/auth", authRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
-
+app.use("/api/ai", aiRoutes);
 // test route
 app.get("/", (req, res) => {
   res.send("Backend running successfully 🚀");
