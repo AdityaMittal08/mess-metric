@@ -23,12 +23,15 @@ const useCounter = (end, duration = 1500) => {
   return count;
 };
 
-export function CoinRedemptionCard({mealCoins}) {
-  const walletData = {
-    coins: mealCoins,
+export function CoinRedemptionCard({user}) {
+  const walletData = user ? {
+    coins: user.mealCoins,
+    expiringSoon: 0,
+  } : {
+    coins: 1,
     expiringSoon: 0,
   };
-
+  
   const animatedCoins = useCounter(walletData.coins);
 
   return (

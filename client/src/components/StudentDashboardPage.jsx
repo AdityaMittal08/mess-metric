@@ -67,7 +67,7 @@ export function StudentDashboardPage() {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <CoinRedemptionCard mealCoins={user.mealCoins} />
+          <CoinRedemptionCard user={user} />
         </motion.div>
 
         <div className="mt-8 mb-8">
