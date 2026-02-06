@@ -23,9 +23,9 @@ const useCounter = (end, duration = 1500) => {
   return count;
 };
 
-export function CoinRedemptionCard() {
+export function CoinRedemptionCard({mealCoins}) {
   const walletData = {
-    coins: 245,
+    coins: mealCoins,
     expiringSoon: 0,
   };
 

@@ -46,13 +46,28 @@ const weeklyMenu = {
   ],
 };
 
-export function DailyMealTracker() {
-  const studentName = "Alex";
-  
+export function DailyMealTracker({user}) {
   const todayDate = new Date();
   const currentDayName = todayDate.toLocaleDateString('en-US', { weekday: 'long' }); 
   const formattedDate = todayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  
+  const getISTHour = () => {
+    const now = new Date();
+    return parseInt(
+      now.toLocaleTimeString("en-US", {
+        timeZone: "Asia/Kolkata",
+        hour: "numeric",
+        hour12: false,
+      })
+    );
+  };
 
+  const hour = getISTHour();
+  let greeting = "Good Night";
+
+  if (hour >= 5 && hour < 12) greeting = "Good Morning";
+  else if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
+  else if (hour >= 17 && hour < 21) greeting = "Good Evening";
 
   const [mealStatus, setMealStatus] = useState(() => {
     const todaysMenu = weeklyMenu[currentDayName] || weeklyMenu["Monday"];
@@ -63,7 +78,7 @@ export function DailyMealTracker() {
       isEating: true
     }));
   });
-
+  
   const toggleMeal = (id) => {
     setMealStatus((prevMeals) =>
       prevMeals.map((meal) =>
@@ -72,12 +87,16 @@ export function DailyMealTracker() {
     );
   };
 
+  if (!user) {
+    return <div className="p-4 text-gray-500">Loading tracker...</div>;
+  }
+  
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-800">
-          Good Morning, <span className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">{studentName}</span> 👋
+          {greeting}, <span className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">{user.name || 'student'}</span>
         </h1>
         <p className="text-slate-500 mt-1 flex items-center gap-2">
           <span className="bg-emerald-100 px-2 py-0.5 rounded text-sm font-bold text-emerald-800">

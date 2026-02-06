@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Leaf, Coins, Bell, User, LogOut, Settings, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export function StudentDashboardNavBar() {
+export function StudentDashboardNavBar({user}) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -21,16 +21,11 @@ export function StudentDashboardNavBar() {
     }
   ]);
 
-  const studentData = {
-    name: 'Alex Kumar',
-    rollNumber: 'CS2024001',
-    mealCoins: 245,
-  };
-
+  
   const handleMarkAllAsRead = () => {
     setNotifications([]);
   };
-
+  
   const useOutsideClick = (callback) => {
     const ref = useRef();
     useEffect(() => {
@@ -42,9 +37,18 @@ export function StudentDashboardNavBar() {
     }, [callback]);
     return ref;
   };
-
+  
   const notifRef = useOutsideClick(() => setIsNotifOpen(false));
   const profileRef = useOutsideClick(() => setIsProfileOpen(false));
+  
+  if (!user) {
+    return <div className="p-4 text-gray-500">Loading tracker...</div>;
+  }
+  const studentData = {
+    name: user.name,
+    rollNumber: user.registrationNo || '0',
+    mealCoins: user.mealCoins,
+  };
 
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-emerald-100 sticky top-0 z-50">

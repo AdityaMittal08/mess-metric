@@ -23,14 +23,53 @@ const useCounter = (end, duration = 2000) => {
   return count;
 };
 
-export function StatsOverview() {
-  const stats = {
-    mealsSkipped: 7,
+export function StatsOverview({user}) {
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    mealsSkipped: 0,
     totalMeals: 60,
-    coinsSaved: 350,
-    rank: 12,
-    topPercent: 5
-  };
+    coinsSaved: 0,
+    rank: 0,
+    topPercent: 0
+  });
+
+  useEffect(() => {
+    const fetchRank = async() => {
+      if(!user?.email){
+        return (<>
+          <p>Can't fetch rankings</p>
+        </>)
+      }
+
+      try{
+        const port = import.meta.env.VITE_PORT || "5000";
+        const url = `http://localhost:${port}/api/leaderboard/`; 
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const myIndex = data.findIndex((u) => u.email === user.email);
+
+        const myRank = myIndex !== -1 ? myIndex + 1 : data.length + 1;
+
+        const totalStudents = data.length || 1;
+        const topPercent = Math.ceil((myRank / totalStudents) * 100);
+
+        setStats({
+          totalStudents: totalStudents,
+          mealsSkipped: Math.floor((user.mealCoins || 0) / 50), // Assumption: 50 coins = 1 meal
+          totalMeals: 60,
+          coinsSaved: user.mealCoins || 0,
+          rank: myRank,
+          topPercent: topPercent
+        });
+      }catch(error){
+        console.error("Error fetching rank:", error);
+      }
+    }
+
+    fetchRank();
+  }, [user])
 
   const animatedSkipped = useCounter(stats.mealsSkipped);
   const animatedRank = useCounter(stats.rank);
@@ -113,7 +152,7 @@ export function StatsOverview() {
                   <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md mb-1 inline-block w-fit">
                     Top {stats.topPercent}%
                   </span>
-                  <span className="text-xs text-slate-400">of 1200 students</span>
+                  <span className="text-xs text-slate-400">{stats.totalStudents}</span>
                 </div>
               </div>
             </div>
