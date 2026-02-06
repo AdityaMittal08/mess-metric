@@ -13,12 +13,17 @@ const generateToken = (user) => {
 // REGISTER
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, registrationNo, messName, password } = req.body;
 
     // Check if user exists
-    const exists = await User.findOne({ email });
+    const exists = await User.findOne({
+      $or: [{ email }, { registrationNo }]
+    });
+
     if (exists) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({
+        message: "Email or Registration Number already exists"
+      });
     }
 
     // Hash password
@@ -28,6 +33,8 @@ exports.register = async (req, res) => {
     const user = await User.create({
       name,
       email,
+      registrationNo,
+      messName,
       password: hashedPassword
     });
 
@@ -46,12 +53,12 @@ exports.login = async (req, res) => {
     const loginKey = email || identifier; 
 
     if (!loginKey || !password) {
-        return res.status(400).json({ message: "Email and Password are required" });
+        return res.status(400).json({ message: "All fields  are required" });
     }
 
-    // Find user by Email OR Name
+    // Find user by Email OR Registration-No
     const user = await User.findOne({
-      $or: [{ email: loginKey }, { name: loginKey }]
+      $or: [{ email: loginKey }, { registrationNo: loginKey }]
     });
 
     if (!user) {
@@ -71,11 +78,13 @@ exports.login = async (req, res) => {
 
     res.json({
       success: true,
+      message:"Login successfully",
       token,
       user: {
-        id: user._id,
         name: user.name,
         email: user.email,
+        registrationNo: user.registrationNo,
+        messName: user.messName,
         mealCoins: user.mealCoins
       }
     });

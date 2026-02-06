@@ -33,13 +33,21 @@ export function Login() {
     try {
       const port = `http://localhost:${import.meta.env.VITE_PORT || '5000'}/api/auth/login`;
       
+      console.log("Attempting login...");
       const response = await fetch(port, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          email: email.trim().toLowerCase(), 
+          password 
+        }),
       });
 
       const data = await response.json();
+      console.log("Login response:", data);
 
       if (!response.ok) {
         setError(data.message || "Login failed. Please check your credentials.");
@@ -48,13 +56,23 @@ export function Login() {
       }
 
       if (data.success) {
+        // Store token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        console.log("Login successful, navigating to dashboard");
         navigate('/student/dashboard');
+      } else {
+        setError(data.message || "Login failed");
+        setIsLoading(false);
       }
     } catch (error) {
-      console.error("Error:", error);
-      setError("Unable to connect to server. Please try again later.");
+      console.error("Login error:", error);
+      setError("Unable to connect to server. Please check if backend is running.");
     } finally {
-      setIsLoading(false);
+      if (error) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -117,9 +135,10 @@ export function Login() {
             <input 
               type="text" 
               placeholder="name@gmail.com" 
+              value={email}
               className="w-full p-3 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-[#10b77c] transition-all bg-white/50"
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleLogin()} // Allow Enter key to login
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
             />
           </motion.div>
           
@@ -133,6 +152,7 @@ export function Login() {
             <input 
               type="password" 
               placeholder="••••••••" 
+              value={password}
               className="w-full p-3 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-[#10b77c] transition-all bg-white/50"
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
@@ -180,6 +200,16 @@ export function Login() {
             <span className="text-[#2f4b69] font-bold ml-1 cursor-pointer hover:underline">Sign up</span>
           </Link>
         </motion.p>
+        
+        {/* Debug button for testing */}
+        <button 
+          onClick={() => {
+            console.log("Current state:", { email, password });
+          }}
+          className="mt-4 text-xs text-gray-400 hover:text-gray-600"
+        >
+          Debug
+        </button>
       </motion.div>
     </div>
   );
