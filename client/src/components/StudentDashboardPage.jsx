@@ -1,22 +1,22 @@
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
+// Components
 import { StudentDashboardNavBar } from "./StudentDashboard/StudentDashboardNavBar";
 import { DailyMealTracker } from "./StudentDashboard/DailyMealTracker";
 import { StatsOverview } from "./StudentDashboard/StatsOverview";
 import { CoinRedemptionCard } from "./StudentDashboard/CoinRedemptionCard";
 import { WeeklyRewardBadge } from "./StudentDashboard/WeeklyRewardBadge";
 import { DailyFoodReview } from "./StudentDashboard/DailyFoodReview";
-import AiWasteChart from './AiWasteChart';
-import { useState, useEffect } from "react";
+import AiWasteChart from './AiWasteChart'; 
+
+// ❌ DELETED: import AiFeedbackWidget from './AiFeedbackWidget'; (No longer needed)
 
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.1,
-    },
+    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
   },
 };
 
@@ -32,7 +32,6 @@ const itemVariants = {
 export function StudentDashboardPage() {
   const [user, setUser] = useState(null);
 
-  // 3. Load user data when the component mounts
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -62,7 +61,7 @@ export function StudentDashboardPage() {
           <DailyMealTracker user={user} />
         </motion.div>
 
-        <motion.div variants={itemVariants} user={user} >
+        <motion.div variants={itemVariants}>
           <StatsOverview user={user} />
         </motion.div>
 
@@ -70,12 +69,13 @@ export function StudentDashboardPage() {
           <CoinRedemptionCard user={user} />
         </motion.div>
 
-        <div className="mt-8 mb-8">
-          <AiWasteChart />
-        </div>
+        {/* 👇 UPDATED: Graph is now full width again, Feedback box is gone */}
+        <motion.div variants={itemVariants} className="px-4 md:px-6 mb-8">
+           <AiWasteChart />
+        </motion.div>
 
         <motion.div variants={itemVariants}>
-          <WeeklyRewardBadge  />
+          <WeeklyRewardBadge />
         </motion.div>
 
         <motion.div variants={itemVariants}>
