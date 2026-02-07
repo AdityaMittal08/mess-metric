@@ -10,6 +10,9 @@ const connectDB = require("./config/db");
 
 const app = express();
 
+// For connecting admin
+app.use("/api/admin/auth", require("./routes/admin.auth.routes"));
+
 // middleware
 app.use(cors({
   origin: "http://localhost:5173", // Your Vite frontend URL
