@@ -9,17 +9,19 @@ export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [registrationNumber, setRegistrationNumber] = useState("");
+  const [messName, setMessName] = useState("");
   
   const [error, setError] = useState(""); 
   const [isLoading, setIsLoading] = useState(false);
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@vitbhopal\.ac\.in$/;
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
 
   const handleRegister = async () => {
     setError("");
     
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || !password || !confirmPassword || !registrationNumber || !messName) {
       setError("Please fill in all fields");
       return;
     }
@@ -46,7 +48,7 @@ export function Register() {
       const response = await fetch(port, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, registrationNo: registrationNumber, email, messName,  password }),
       });
 
       const data = await response.json();
@@ -133,13 +135,50 @@ export function Register() {
           </motion.div>
 
           <motion.div variants={itemVariants}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
+            <input
+              type="text"
+              placeholder="21BCE10111"
+              className="w-full p-3 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-[#10b77c] transition-all bg-white/50"
+              onChange={(e) => setRegistrationNumber(e.target.value)}
+            />
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
             <input
               type="email"
-              placeholder="name@gmail.com"
+              placeholder="name@vitbhopal.ac.in"
               className="w-full p-3 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-[#10b77c] transition-all bg-white/50"
               onChange={(e) => setEmail(e.target.value)}
             />
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="w-full">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select Your Mess
+            </label>
+            <div className="relative">
+              <select
+                value={messName}
+                onChange={(e) => setMessName(e.target.value)}
+                className="w-full p-3 border-2 border-gray-100 rounded-xl appearance-none bg-white/50 focus:outline-none focus:border-[#10b77c] transition-all text-gray-700"
+              >
+                <option value="" disabled>Choose an option</option>
+                <option value="Ab Dakshin">AB Dakshin</option>
+                <option value="JMB">JMB</option>
+                <option value="Mayuri">Mayuri</option>
+                <option value="Rassencse">Rassencse</option>
+                <option value="Safal">Safal</option>
+              </select>
+
+              {/* Arrow Icon */}
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                </svg>
+              </div>
+            </div>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -154,7 +193,7 @@ export function Register() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
               <input
                 type="password"
                 placeholder="••••••••"
