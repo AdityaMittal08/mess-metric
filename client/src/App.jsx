@@ -4,7 +4,9 @@ import { LeaderboardPage } from './components/LeaderboardPage.jsx';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Login } from './components/Auth/login.jsx';
 import { Register } from './components/Auth/Register.jsx';
-import { StudentDashboard } from './components/StudentDashboardPage.jsx';
+import { StudentDashboardPage } from './components/StudentDashboardPage.jsx';
+import { ProtectedRoute } from './components/Auth/ProtectedRoute.jsx'; // <--- Import this
+
 function App() {
   return(
     <Router>
@@ -14,10 +16,14 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path='/register' element={<Register />} />
-          <Route path='/student/dashboard' element={<StudentDashboard />} />
+          
+          {/* WRAP THE PROTECTED ROUTES LIKE THIS: */}
+          <Route element={<ProtectedRoute />}>
+             <Route path='/student/dashboard' element={<StudentDashboardPage />} />
+          </Route>
+
         </Routes>
       </div>
-
     </Router>
   )
 }

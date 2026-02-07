@@ -7,27 +7,39 @@ import { CoinRedemptionCard } from "./StudentDashboard/CoinRedemptionCard";
 import { WeeklyRewardBadge } from "./StudentDashboard/WeeklyRewardBadge";
 import { DailyFoodReview } from "./StudentDashboard/DailyFoodReview";
 import AiWasteChart from './AiWasteChart';
+import { useState, useEffect } from "react";
 
-export function StudentDashboard() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.1,
-      },
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
     },
-  };
+  },
+};
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { duration: 0.5, ease: "easeOut" }
-    },
-  };
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.5, ease: "easeOut" }
+  },
+};
+
+export function StudentDashboardPage() {
+  const [user, setUser] = useState(null);
+
+  // 3. Load user data when the component mounts
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+  
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
@@ -37,7 +49,7 @@ export function StudentDashboard() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="sticky top-0 z-50"
       >
-        <StudentDashboardNavBar />
+        <StudentDashboardNavBar user={user} />
       </motion.div>
 
       <motion.main
@@ -47,15 +59,15 @@ export function StudentDashboard() {
         animate="visible"
       >
         <motion.div variants={itemVariants}>
-          <DailyMealTracker />
+          <DailyMealTracker user={user} />
+        </motion.div>
+
+        <motion.div variants={itemVariants} user={user} >
+          <StatsOverview user={user} />
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <StatsOverview />
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <CoinRedemptionCard />
+          <CoinRedemptionCard user={user} />
         </motion.div>
 
         <div className="mt-8 mb-8">
@@ -63,7 +75,7 @@ export function StudentDashboard() {
         </div>
 
         <motion.div variants={itemVariants}>
-          <WeeklyRewardBadge />
+          <WeeklyRewardBadge  />
         </motion.div>
 
         <motion.div variants={itemVariants}>

@@ -6,7 +6,7 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 export function Login() {
   const navigate = useNavigate();
   
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   
   const [error, setError] = useState("");
@@ -15,19 +15,18 @@ export function Login() {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+  
   const handleLogin = async () => {
     setError("");
     
-    if (!email || !password) {
+    if (!identifier || !password) {
       setError("Please enter both email and password");
       return;
     }
+    
+    const emailCheck = emailRegex.test(identifier);
 
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-
+    
     setIsLoading(true);
 
     try {
@@ -41,7 +40,7 @@ export function Login() {
           'Accept': 'application/json'
         },
         body: JSON.stringify({ 
-          email: email.trim().toLowerCase(), 
+          [emailCheck ? "email" : "identifier"]: identifier.trim(), 
           password 
         }),
       });
@@ -131,13 +130,13 @@ export function Login() {
             transition={{ delay: 0.2 }}
             className="w-full"
           >
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Login ID</label>
             <input 
               type="text" 
-              placeholder="name@gmail.com" 
-              value={email}
+              placeholder="Email address or Registration Number" 
+              value={identifier}
               className="w-full p-3 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-[#10b77c] transition-all bg-white/50"
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setIdentifier(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
             />
           </motion.div>
@@ -201,15 +200,6 @@ export function Login() {
           </Link>
         </motion.p>
         
-        {/* Debug button for testing */}
-        <button 
-          onClick={() => {
-            console.log("Current state:", { email, password });
-          }}
-          className="mt-4 text-xs text-gray-400 hover:text-gray-600"
-        >
-          Debug
-        </button>
       </motion.div>
     </div>
   );
