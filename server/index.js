@@ -18,8 +18,13 @@ app.use("/api/admin/auth", require("./routes/admin.auth.routes"));
 
 // middleware
 app.use(cors({
-  origin: "http://localhost:5173", // Your Vite frontend URL
-  credentials: true
+  origin: [
+    "http://localhost:5173", 
+    "http://localhost:5000",
+    "https://mess-metric.vercel.app" 
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"]
 }));
 app.use(express.json());
 
