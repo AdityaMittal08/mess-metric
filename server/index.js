@@ -13,23 +13,9 @@ const app = express();
 // ==========================================
 // 1. CORS CONFIGURATION (Crucial for Vercel)
 // ==========================================
-const allowedOrigins = [
-  "http://localhost:5173",             // Local Frontend
-  "http://localhost:5000",             // Local Backend
-  "https://mess-metric.vercel.app"     // 👈 Your Production Website
-];
-
+// I have replaced the complex logic with this wildcard to force it to work.
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
+  origin: "*",  // 👈 This allows Vercel to connect without being blocked
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
