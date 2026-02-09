@@ -15,8 +15,8 @@ const app = express();
 // ==========================================
 // I have replaced the complex logic with this wildcard to force it to work.
 app.use(cors({
-  origin: "*",  // 👈 This allows Vercel to connect without being blocked
-  credentials: true,
+  origin: "*",  // Allow all connections
+  credentials: false, // <--- THIS WAS THE PROBLEM. Must be false if origin is "*"
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
