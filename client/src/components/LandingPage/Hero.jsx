@@ -21,8 +21,8 @@ export function Hero(){
             transition={{ duration: 0.6 }}
           >
 
-            {/* 👇 FIXED: text-3xl for mobile (fits perfectly), text-5xl for tablets, text-7xl for desktop */}
-            <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight break-words">
+            {/* 👇 FIXED: text-2xl is smaller and safer for mobile phones */}
+            <h1 className="text-2xl xs:text-3xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight break-words">
               <span className="bg-gradient-to-r from-emerald-600 via-green-600 to-lime-600 bg-clip-text text-transparent block">
                 Transforming Campus
               </span>
@@ -36,7 +36,6 @@ export function Hero(){
               and creates a greener campus one meal at a time.
             </p>
 
-            {/* 👇 FIXED: Buttons stack on mobile with max-width to look clean */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full max-w-md mx-auto sm:max-w-none">
               <Link to="/login" className="w-full sm:w-auto">
                 <button className="w-full sm:w-auto rounded-lg p-3 bg-gradient-to-r text-white from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-base md:text-lg font-medium px-6 flex justify-center items-center shadow-lg shadow-emerald-200">
