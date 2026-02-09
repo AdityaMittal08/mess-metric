@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
 import pandas as pd
+import os
 from textblob import TextBlob  # 👈 NEW: NLP Library
 
 app = Flask(__name__)
@@ -88,5 +89,8 @@ def analyze_feedback():
         return jsonify({"status": "error", "message": str(e)})
 
 if __name__ == '__main__':
-    print("🔥 AI Server starting on http://127.0.0.1:5001")
-    app.run(port=5001, debug=True)
+    # Get port from environment variable or use 5001 for local
+    port = int(os.environ.get("PORT", 5001)) 
+    print(f"🔥 AI Server starting on Port {port}")
+    # Host must be 0.0.0.0 to be accessible outside the container
+    app.run(host='0.0.0.0', port=port)
