@@ -2,72 +2,76 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
+// Import Routes
 const authRoutes = require("./routes/auth.routes");
 const leaderboardRoutes = require("./routes/leaderboard.routes");
 const aiRoutes = require("./routes/ai.routes");
-// database
 const connectDB = require("./config/db");
 
 const app = express();
 
-// middleware
+// ==========================================
+// 1. CORS CONFIGURATION (Crucial for Vercel)
+// ==========================================
+// I have replaced the complex logic with this wildcard to force it to work.
 app.use(cors({
-  origin: "http://localhost:5173", // Your Vite frontend URL
-  credentials: true
+  origin: "*",  // Allow all connections
+  credentials: false, // <--- THIS WAS THE PROBLEM. Must be false if origin is "*"
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
-app.use(express.json());
 
-// Add request logging middleware
+// ==========================================
+// 2. MIDDLEWARE
+// ==========================================
+app.use(express.json()); // Parse JSON bodies
+
+// Request Logger (Helps debugging)
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
+  console.log(`[Request] ${req.method} ${req.url}`);
   next();
 });
 
-// Connect to database
+// ==========================================
+// 3. DATABASE CONNECTION
+// ==========================================
 connectDB().catch(err => {
-  console.error("Database connection failed:", err);
+  console.error("❌ Database connection failed:", err);
   process.exit(1);
 });
 
-// routes
+// ==========================================
+// 4. ROUTES
+// ==========================================
+app.get("/", (req, res) => {
+  res.json({ message: "Backend running successfully 🚀", timestamp: new Date().toISOString() });
+});
+
+app.get("/health", (req, res) => {
+  res.json({ status: "OK", timestamp: new Date().toISOString() });
+});
+
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/ai", aiRoutes);
 
-// attendance routes
-const attendanceRoutes = require("./routes/attendance.routes");
-app.use("/api/attendance", attendanceRoutes);
+// Inline requires (cleaner way to load these)
+app.use("/api/admin/auth", require("./routes/admin.auth.routes"));
+app.use("/api/attendance", require("./routes/attendance.routes"));
+app.use("/api/menu", require("./routes/menu.routes"));
 
-// test route
-app.get("/", (req, res) => {
-  res.json({ 
-    message: "Backend running successfully 🚀",
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.json({ 
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
-
-// Error handling middleware
+// Error Handling Middleware
 app.use((err, req, res, next) => {
-  console.error("Server error:", err);
-  res.status(500).json({
-    success: false,
-    message: "Internal server error",
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
+  console.error("❌ Server Error:", err);
+  res.status(500).json({ success: false, message: "Internal Server Error" });
 });
 
+// ==========================================
+// 5. START SERVER
+// ==========================================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Backend URL: http://localhost:${PORT}`);
-  console.log(`🔗 Frontend URL: http://localhost:5173`);
 });

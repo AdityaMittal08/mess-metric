@@ -1,1 +1,6 @@
-pandas scikit-learn flask flask-cors
+Flask
+flask-cors
+pandas
+scikit-learn
+textblob
+numpy

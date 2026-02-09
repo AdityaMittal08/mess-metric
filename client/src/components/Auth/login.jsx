@@ -30,7 +30,9 @@ export function Login() {
     setIsLoading(true);
 
     try {
-      const port = `http://localhost:${import.meta.env.VITE_PORT || '5000'}/api/auth/login`;
+      // 👇 Defines the URL based on where the app is running
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const port = `${API_URL}/api/auth/login`;
       
       console.log("Attempting login...");
       const response = await fetch(port, {

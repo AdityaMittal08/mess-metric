@@ -3,10 +3,8 @@ const axios = require('axios');
 // Controller to handle AI prediction requests
 exports.getPrediction = async (req, res) => {
     try {
-        // 1. Extract data from the incoming request (from Frontend)
         const { attendance, day_of_week, is_weekend, is_special_event } = req.body;
 
-        // Validation: Ensure attendance is provided
         if (!attendance) {
             return res.status(400).json({ 
                 success: false, 
@@ -14,8 +12,7 @@ exports.getPrediction = async (req, res) => {
             });
         }
 
-        // 2. Call your local Python AI Engine (Port 5001)
-        // Note: We use 127.0.0.1 to avoid 'localhost' issues
+        // Call Python AI Engine
         const aiResponse = await axios.post('http://127.0.0.1:5001/predict', {
             attendance,
             day_of_week,
@@ -23,26 +20,41 @@ exports.getPrediction = async (req, res) => {
             is_special_event
         });
 
-        // 3. Send the AI's response back to the client
         return res.status(200).json({
             success: true,
             data: aiResponse.data
         });
 
     } catch (error) {
-        console.error("❌ AI Engine Error:", error.message);
-        
-        // Handle case where Python server is off
+        console.error("❌ AI Prediction Error:", error.message);
         if (error.code === 'ECONNREFUSED') {
-            return res.status(503).json({ 
-                success: false, 
-                message: "AI Engine is currently offline. Please start the Python server." 
-            });
+            return res.status(503).json({ success: false, message: "AI Engine is offline." });
+        }
+        return res.status(500).json({ success: false, message: "Server Error." });
+    }
+};
+
+// 👇 NEW: Controller to handle Sentiment Analysis
+exports.analyzeFeedback = async (req, res) => {
+    try {
+        const { feedback } = req.body;
+
+        if (!feedback) {
+            return res.status(400).json({ success: false, message: "Feedback text is required." });
         }
 
-        return res.status(500).json({ 
-            success: false, 
-            message: "Internal Server Error during prediction." 
+        // Call Python AI for Sentiment Analysis
+        const aiResponse = await axios.post('http://127.0.0.1:5001/analyze-feedback', {
+            feedback
         });
+
+        return res.status(200).json({
+            success: true,
+            data: aiResponse.data
+        });
+
+    } catch (error) {
+        console.error("❌ AI Analysis Error:", error.message);
+        return res.status(500).json({ success: false, message: "AI Analysis Failed" });
     }
 };
