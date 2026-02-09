@@ -44,8 +44,10 @@ export function Register() {
     setIsLoading(true);
 
     try {
-      const port = `http://localhost:${import.meta.env.VITE_PORT || '5000'}/api/auth/register`;
-      const response = await fetch(port, {
+      // 👇 Defines the URL based on where the app is running
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const port = `${API_URL}/api/auth/register`;
+            const response = await fetch(port, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, registrationNo: registrationNumber, email, messName,  password }),
