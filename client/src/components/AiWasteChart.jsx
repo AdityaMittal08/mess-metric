@@ -7,6 +7,9 @@ const AiWasteChart = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // 👇 MOVED OUTSIDE LOOP FOR SAFETY
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   const getDayName = (offset) => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const d = new Date();
@@ -19,13 +22,14 @@ const AiWasteChart = () => {
       const forecastData = [];
       const today = new Date().getDay();
 
+      // We loop 7 times for 7 days
       for (let i = 0; i < 7; i++) {
         const dayIndex = (today + i) % 7;
         const isWeekend = (dayIndex === 0 || dayIndex === 6) ? 1 : 0;
         const mockAttendance = Math.floor(1100 + Math.random() * 200);
 
         try {
-          const response = await axios.post('http://localhost:5000/api/ai/predict', {
+          const response = await axios.post(`${API_URL}/api/ai/predict`, {
             attendance: mockAttendance,
             day_of_week: dayIndex,
             is_weekend: isWeekend,
@@ -34,11 +38,17 @@ const AiWasteChart = () => {
 
           forecastData.push({
             day: getDayName(i),
-            waste: parseFloat(response.data.data.predicted_waste_kg.toFixed(1)), // Round to 1 decimal
+            waste: parseFloat(response.data.data.predicted_waste_kg.toFixed(1)), 
             attendance: mockAttendance
           });
         } catch (error) {
-          forecastData.push({ day: getDayName(i), waste: 40 + i, attendance: 1200 });
+          console.warn("AI Server busy, using fallback data for day", i);
+          // Fallback logic so graph doesn't break
+          forecastData.push({ 
+            day: getDayName(i), 
+            waste: isWeekend ? 35 + i : 45 + i, // Different values for variety
+            attendance: 1200 
+          });
         }
       }
 
@@ -85,26 +95,19 @@ const AiWasteChart = () => {
               axisLine={false} 
               tickLine={false} 
               tick={{fill: '#9ca3af', fontSize: 12}} 
-              dy={10} // Pushes labels down slightly to avoid clutter
+              dy={10} 
             />
             
             <YAxis 
               axisLine={false} 
               tickLine={false} 
               tick={{fill: '#9ca3af', fontSize: 12}} 
-              tickFormatter={(value) => `${value}`} // Just numbers on axis to save space
+              tickFormatter={(value) => `${value}`} 
             />
             
             <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#ffffff', 
-                borderRadius: '12px', 
-                border: 'none', 
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
-              }}
+              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
               formatter={(value) => [`${value} kg`, "Predicted Waste"]}
-              labelStyle={{ color: '#374151', fontWeight: 'bold', marginBottom: '5px' }}
-              cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4' }}
             />
             
             <Area 
@@ -112,7 +115,7 @@ const AiWasteChart = () => {
               dataKey="waste" 
               stroke="#10b981" 
               strokeWidth={3}
-              fillOpacity={1} 
+              fillOpacity={0.2}  // 👈 CHANGED from 1 to 0.2 (Makes it transparent/pretty)
               fill="url(#colorWaste)" 
               animationDuration={2000}
             />

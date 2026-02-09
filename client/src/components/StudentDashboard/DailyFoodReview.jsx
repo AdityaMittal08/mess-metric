@@ -78,7 +78,8 @@ export function DailyFoodReview() {
     // 1. Call AI if there is a comment
     if (comment.trim().length > 3) {
       try {
-        const response = await axios.post('http://localhost:5000/api/ai/analyze', {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await axios.post(`${API_URL}/api/ai/analyze`, {
           feedback: comment
         });
         if (response.data.success) {

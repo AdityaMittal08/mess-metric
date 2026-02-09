@@ -12,9 +12,17 @@ export function Login() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [buttonText, setButtonText] = useState("Sign In");
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // 👇 Updated Regex to enforce VIT Bhopal Email
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@vitbhopal\.ac\.in$/;
 
+  // 👇 FUNCTION: Fills the form instantly for Judges
+  const fillDemoCredentials = () => {
+    setIdentifier("judge@vitbhopal.ac.in");
+    setPassword("JudgePass123");
+    setError(""); // Clear any previous errors
+  };
   
   const handleLogin = async () => {
     setError("");
@@ -24,14 +32,19 @@ export function Login() {
       return;
     }
     
-    const emailCheck = emailRegex.test(identifier);
-
+    // Check if it looks like an email (generic check is fine for login input)
+    const isEmailInput = identifier.includes("@");
     
     setIsLoading(true);
+    setButtonText("Signing In...");
+
+    // Friendly "Waking up server" message if it takes too long
+    const slowServerTimer = setTimeout(() => {
+        setButtonText("Waking up server (may take 1 min)...");
+    }, 3000);
 
     try {
-      // 👇 Defines the URL based on where the app is running
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://mess-metric-api.onrender.com';
       const port = `${API_URL}/api/auth/login`;
       
       console.log("Attempting login...");
@@ -42,38 +55,36 @@ export function Login() {
           'Accept': 'application/json'
         },
         body: JSON.stringify({ 
-          [emailCheck ? "email" : "identifier"]: identifier.trim(), 
+          [isEmailInput ? "email" : "identifier"]: identifier.trim(), 
           password 
         }),
       });
 
       const data = await response.json();
-      console.log("Login response:", data);
+      clearTimeout(slowServerTimer);
 
       if (!response.ok) {
         setError(data.message || "Login failed. Please check your credentials.");
         setIsLoading(false);
+        setButtonText("Sign In");
         return;
       }
 
       if (data.success) {
-        // Store token and user data
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        
-        console.log("Login successful, navigating to dashboard");
         navigate('/student/dashboard');
       } else {
         setError(data.message || "Login failed");
         setIsLoading(false);
+        setButtonText("Sign In");
       }
     } catch (error) {
+      clearTimeout(slowServerTimer);
       console.error("Login error:", error);
       setError("Unable to connect to server. Please check if backend is running.");
-    } finally {
-      if (error) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
+      setButtonText("Sign In");
     }
   };
 
@@ -92,12 +103,6 @@ export function Login() {
       y: 0,
       transition: { duration: 0.6, ease: "easeOut" }
     }
-  };
-
-  const errorVariants = {
-    hidden: { opacity: 0, y: -10 },
-    visible: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -10 }
   };
 
   return (
@@ -163,10 +168,9 @@ export function Login() {
           <AnimatePresence>
             {error && (
               <motion.div
-                variants={errorVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
                 className="flex items-center gap-2 bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-200 w-full"
               >
                 <AlertCircle size={16} />
@@ -186,7 +190,7 @@ export function Login() {
             }`}
             onClick={handleLogin}
           >
-            {isLoading ? "Signing In..." : "Sign In"}
+            {isLoading ? buttonText : "Sign In"}
           </motion.button>
         </div>
 
@@ -194,7 +198,7 @@ export function Login() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="mt-8 text-sm text-gray-500"
+          className="mt-6 text-sm text-gray-500"
         >
           Don't have an account?
           <Link to="/register">
@@ -202,6 +206,17 @@ export function Login() {
           </Link>
         </motion.p>
         
+        {/* 👇 THE DEMO CREDENTIALS BUTTON */}
+        <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            onClick={fillDemoCredentials}
+            className="mt-8 text-[10px] md:text-xs font-bold text-gray-400 tracking-[0.2em] hover:text-emerald-600 transition-colors uppercase select-none"
+        >
+            Activate Demo Credentials
+        </motion.button>
+
       </motion.div>
     </div>
   );
