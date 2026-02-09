@@ -6,11 +6,13 @@ export function LeaderboardContent() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [leaderboardData, setLeaderboardData] = useState([]); 
+  
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const port = import.meta.env.VITE_PORT || "5000";
-        const url = `http://localhost:${port}/api/leaderboard/`; 
+        // 👇 USE THE CLOUD URL
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const url = `${API_URL}/api/leaderboard/`; 
 
         const response = await fetch(url);
         const data = await response.json();
@@ -48,7 +50,6 @@ export function LeaderboardContent() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -88,16 +89,13 @@ export function LeaderboardContent() {
                   };
 
                   const studentRank = (currentPage - 1) * itemsPerPage + index + 1;
-
                   const bgColor = rankColors[studentRank] || "bg-gray-100 text-gray-700";
-                  
-
                   const estimatedMeals = Math.floor(student.mealCoins / 10);
                   const estimatedCO2 = (estimatedMeals * 0.8).toFixed(1);
 
                   return (
                     <motion.div
-                      key={studentRank || index} // specific key
+                      key={studentRank || index} 
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -115,11 +113,7 @@ export function LeaderboardContent() {
                         <div className="w-12 h-12">
                           <div className="bg-green-100 text-green-700 flex items-center justify-center w-12 h-12 rounded-full font-bold">
                             {student.name
-                              ? student.name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")
-                                  .substring(0, 2)
+                              ? student.name.split(" ").map((n) => n[0]).join("").substring(0, 2)
                               : "??"}
                           </div>
                         </div>
