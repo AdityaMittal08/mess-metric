@@ -59,16 +59,17 @@ export function StudentDashboardNavBar({user}) {
             <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl transition-transform group-hover:scale-110">
               <Leaf className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent">
+            {/* 👇 Hide text on very small screens to save space */}
+            <span className="text-lg md:text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent hidden xs:block">
               Mess-Metric
             </span>
           </Link>
 
-          <div className="flex items-center space-x-3 md:space-x-6">
+          <div className="flex items-center space-x-2 md:space-x-6">
             
-            <div className="flex items-center space-x-2 bg-amber-50 px-4 py-1.5 rounded-full border border-amber-200 shadow-sm">
-              <Coins className="w-4 h-4 text-amber-600" />
-              <span className="font-bold text-amber-700 text-sm">{studentData.mealCoins}</span>
+            <div className="flex items-center space-x-1 md:space-x-2 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200 shadow-sm">
+              <Coins className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-600" />
+              <span className="font-bold text-amber-700 text-xs md:text-sm">{studentData.mealCoins}</span>
             </div>
 
             <div className="relative" ref={notifRef}>
@@ -83,15 +84,16 @@ export function StudentDashboardNavBar({user}) {
               </button>
 
               {isNotifOpen && (
-                <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-100 rounded-2xl shadow-xl py-2 animate-in fade-in zoom-in duration-200 z-50">
+                // 👇 FIXED: Changed w-80 to w-[85vw] max-w-xs so it fits mobile screens
+                <div className="absolute right-0 mt-3 w-[85vw] max-w-xs bg-white border border-slate-100 rounded-2xl shadow-xl py-2 animate-in fade-in zoom-in duration-200 z-50">
                   <div className="px-4 py-2 border-b border-slate-50 flex justify-between items-center">
-                    <span className="font-bold text-slate-700">Notifications</span>
+                    <span className="font-bold text-slate-700 text-sm md:text-base">Notifications</span>
                     {notifications.length > 0 && (
                       <button 
                         onClick={handleMarkAllAsRead}
                         className="text-xs text-emerald-600 hover:text-emerald-700 font-medium hover:underline"
                       >
-                        Mark all as read
+                        Mark all read
                       </button>
                     )}
                   </div>
@@ -103,11 +105,11 @@ export function StudentDashboardNavBar({user}) {
                     ) : (
                       notifications.map((notif) => (
                         <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0">
-                          <p className="text-sm text-slate-600">
+                          <p className="text-xs md:text-sm text-slate-600">
                             {notif.text.replace(notif.highlight, '')}
                             <span className="font-semibold text-slate-800">{notif.highlight}</span>
                           </p>
-                          <span className="text-xs text-slate-400 mt-1 block">{notif.time}</span>
+                          <span className="text-[10px] md:text-xs text-slate-400 mt-1 block">{notif.time}</span>
                         </div>
                       ))
                     )}
@@ -119,12 +121,12 @@ export function StudentDashboardNavBar({user}) {
             <div className="relative" ref={profileRef}>
               <button 
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center space-x-2 p-1 pr-3 rounded-full hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200"
+                className="flex items-center space-x-1 md:space-x-2 p-1 pr-2 md:pr-3 rounded-full hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200"
               >
-                <div className="bg-gradient-to-tr from-emerald-100 to-green-200 text-emerald-700 flex items-center justify-center w-9 h-9 rounded-full font-bold border border-emerald-200 shadow-sm">
-                  {studentData.name.split(' ').map(n => n[0]).join('')}
+                <div className="bg-gradient-to-tr from-emerald-100 to-green-200 text-emerald-700 flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full font-bold border border-emerald-200 shadow-sm text-xs md:text-sm">
+                  {studentData.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                 </div>
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 md:w-4 md:h-4 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isProfileOpen && (
@@ -141,9 +143,12 @@ export function StudentDashboardNavBar({user}) {
                       <Settings className="w-4 h-4" /> <span>Settings</span>
                     </button>
                     <hr className="my-1 border-slate-50" />
+                    {/* Logout button typically handled by parent or context, kept as visual */}
+                     <Link to="/login">
                     <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
                       <LogOut className="w-4 h-4" /> <span>Logout</span>
                     </button>
+                    </Link>
                   </div>
                 </div>
               )}
