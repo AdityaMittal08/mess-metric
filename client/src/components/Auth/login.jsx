@@ -31,7 +31,7 @@ export function Login() {
 
     try {
       // 👇 Defines the URL based on where the app is running
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://mess-metric-api.onrender.com';
       const port = `${API_URL}/api/auth/login`;
       
       console.log("Attempting login...");
