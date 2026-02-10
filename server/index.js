@@ -11,26 +11,24 @@ const connectDB = require("./config/db");
 const app = express();
 
 // ==========================================
-// 1. CORS CONFIGURATION (THE FIX) 🛡️
+// 1. CORS CONFIGURATION
 // ==========================================
 const allowedOrigins = [
-  "http://localhost:5173",                 // Your Laptop
-  "http://localhost:5174",                 // Your Laptop (Alternate)
-  "https://mess-metric.vercel.app"         // 👈 YOUR LIVE WEBSITE (Crucial)
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://mess-metric.vercel.app"
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
       return callback(new Error(msg), false);
     }
     return callback(null, true);
   },
-  credentials: true, // Allow cookies/headers
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -68,7 +66,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/ai", aiRoutes);
 
-// Inline requires
+// 👇 THIS WAS MISSING! ADD THIS LINE:
+app.use("/api/food-reviews", require("./routes/foodReview.routes")); 
+
 app.use("/api/admin/auth", require("./routes/admin.auth.routes"));
 app.use("/api/attendance", require("./routes/attendance.routes"));
 app.use("/api/menu", require("./routes/menu.routes"));
