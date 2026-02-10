@@ -23,19 +23,18 @@ export function StudentDashboardNavBar({user}) {
     }
   ]);
 
-  
   const handleMarkAllAsRead = () => {
     setNotifications([]);
   };
 
+  // 👇 THIS IS THE FIX FOR THE "ZOMBIE DATA" BUG
   const handleLogout = () => {
-    // Clear authentication data from localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    // Close the profile dropdown
-    setIsProfileOpen(false);
-    // Navigate to login page
-    navigate('/login');
+    // 1. Wipe the entire browser memory for this site (Token, User, Reviews, etc.)
+    localStorage.clear();
+
+    // 2. Force a Hard Refresh to Login Page
+    // This ensures React completely resets, so User B never sees User A's data.
+    window.location.href = "/login";
   };
 
   const handleProfile = (e) => {
@@ -43,9 +42,7 @@ export function StudentDashboardNavBar({user}) {
       e.preventDefault();
       e.stopPropagation();
     }
-    // Close the profile dropdown
     setIsProfileOpen(false);
-    // Navigate to profile page
     navigate('/student/profile');
   };
   
@@ -53,16 +50,14 @@ export function StudentDashboardNavBar({user}) {
     const ref = useRef();
     useEffect(() => {
       const handleClick = (event) => {
-        // Don't close if clicking on a button inside the dropdown
         const clickedButton = event.target.closest('button');
         if (clickedButton && ref.current && ref.current.contains(clickedButton)) {
-          return; // Don't close dropdown if clicking a button inside it
+          return;
         }
         if (ref.current && !ref.current.contains(event.target)) {
           callback();
         }
       };
-      // Use a small delay to ensure button clicks process first
       const timeoutId = setTimeout(() => {
         document.addEventListener('mousedown', handleClick);
       }, 10);
@@ -114,7 +109,6 @@ export function StudentDashboardNavBar({user}) {
             <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl transition-transform group-hover:scale-110">
               <Leaf className="w-5 h-5 text-white" />
             </div>
-            {/* 👇 Hide text on very small screens to save space */}
             <span className="text-lg md:text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent hidden xs:block">
               Mess-Metric
             </span>
@@ -139,7 +133,6 @@ export function StudentDashboardNavBar({user}) {
               </button>
 
               {isNotifOpen && (
-                // 👇 FIXED: Changed w-80 to w-[85vw] max-w-xs so it fits mobile screens
                 <div className="absolute right-0 mt-3 w-[85vw] max-w-xs bg-white border border-slate-100 rounded-2xl shadow-xl py-2 animate-in fade-in zoom-in duration-200 z-50">
                   <div className="px-4 py-2 border-b border-slate-50 flex justify-between items-center">
                     <span className="font-bold text-slate-700 text-sm md:text-base">Notifications</span>
@@ -193,13 +186,12 @@ export function StudentDashboardNavBar({user}) {
                     <p className="text-xs text-slate-500 truncate">{studentData.rollNumber}</p>
                   </div>
                   <div className="p-1">
-                    <Link 
-                      to="/student/profile"
-                      onClick={() => setIsProfileOpen(false)}
+                    <button 
+                      onClick={() => setIsProfileModalOpen(true)}
                       className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors cursor-pointer"
                     >
                       <User className="w-4 h-4" /> <span>Profile</span>
-                    </Link>
+                    </button>
                     <button 
                       type="button"
                       className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors"
@@ -223,14 +215,12 @@ export function StudentDashboardNavBar({user}) {
         </div>
       </div>
 
-      {/* Profile Modal */}
       {isProfileModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div 
             ref={profileModalRef}
             className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200"
           >
-            {/* Modal Header */}
             <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-6 rounded-t-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-white">Profile Details</h2>
@@ -254,7 +244,6 @@ export function StudentDashboardNavBar({user}) {
               </div>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 space-y-4">
               <div className="flex items-start space-x-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
                 <div className="p-2 rounded-lg bg-white shadow-sm text-emerald-600">
@@ -297,7 +286,6 @@ export function StudentDashboardNavBar({user}) {
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setIsProfileModalOpen(false)}
