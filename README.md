@@ -58,9 +58,9 @@ npm install
 Create a .env file in the server folder:
 ```bash
 PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-GEMINI_API_KEY=your_google_gemini_key
+MONGO_URI=mongodb+srv://raghav123:Raghav2608@cluster0.p72gnzr.mongodb.net/?appName=Cluster0
+JWT_SECRET=mysecretkey123
+GEMINI_API_KEY=AIzaSyBcY2IIo2IGBCHEdmTY3qA39ErtK75RVRA
 
 Run the server:
 ```bash
