@@ -91,7 +91,7 @@ Don't want to sign up? Use our one-click **Demo Mode** on the Login page, or use
 
 * **Yash Singhal** - AI Logic & Integration
 * **Aditya Mittal** - Frontend & UI/UX
-* **Raghav** - Backend Development
+* **Raghav Gupta** - Backend Development and Blockchain
 
 ---
 
