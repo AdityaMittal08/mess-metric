@@ -49,11 +49,13 @@ We use **Google Gemini AI** to analyze student feedback in real-time, categorizi
 ```bash
 git clone [https://github.com/VITianYash42/mess-metric.git](https://github.com/VITianYash42/mess-metric.git)
 cd mess-metric
+```
 
 ### 2. Backend Setup
 ```bash
 cd server
 npm install
+```
 
 Create a .env file in the server folder:
 ```bash
@@ -61,16 +63,19 @@ PORT=5000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
 GEMINI_API_KEY=your_google_gemini_key
+```
 
 Run the server:
 ```bash
 npm start
+```
 
 ### 3. Frontend Setup
 ```bash
 cd ../client
 npm install
 npm run dev
+```
 
 ## 🔐 Demo Credentials (For Judges)
 
