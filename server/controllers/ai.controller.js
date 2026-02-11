@@ -1,12 +1,9 @@
 const axios = require('axios');
 
-// 👇 CRITICAL FIX: Dynamically choose the URL
-// If on Render, it uses the Cloud URL. If on Laptop, it uses Localhost.
-const AI_URL = process.env.AI_ENGINE_URL || 'http://127.0.0.1:5001';
+// 👇 CRITICAL FIX: Use the Environment Variable, or default to Localhost only for testing
+// Replace 'https://mess-metric-python.onrender.com' with your ACTUAL Python Service URL if different
+const AI_URL = process.env.AI_ENGINE_URL || 'https://mess-metric-python.onrender.com';
 
-console.log("🤖 AI Controller connecting to:", AI_URL);
-
-// Controller to handle AI prediction requests
 exports.getPrediction = async (req, res) => {
     try {
         const { attendance, day_of_week, is_weekend, is_special_event } = req.body;
@@ -18,7 +15,7 @@ exports.getPrediction = async (req, res) => {
             });
         }
 
-        // Call Python AI Engine
+        // Use the Dynamic URL (AI_URL) instead of hardcoded localhost
         const aiResponse = await axios.post(`${AI_URL}/predict`, {
             attendance,
             day_of_week,
@@ -32,15 +29,11 @@ exports.getPrediction = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(`❌ AI Prediction Error connecting to ${AI_URL}:`, error.message);
-        if (error.code === 'ECONNREFUSED') {
-            return res.status(503).json({ success: false, message: "AI Engine is offline." });
-        }
-        return res.status(500).json({ success: false, message: "Server Error." });
+        console.error("❌ AI Prediction Error:", error.message);
+        return res.status(500).json({ success: false, message: "AI Engine is offline." });
     }
 };
 
-// Controller to handle Sentiment Analysis
 exports.analyzeFeedback = async (req, res) => {
     try {
         const { feedback } = req.body;
@@ -49,7 +42,9 @@ exports.analyzeFeedback = async (req, res) => {
             return res.status(400).json({ success: false, message: "Feedback text is required." });
         }
 
-        // Call Python AI for Sentiment Analysis
+        console.log(`📡 Connecting to AI at: ${AI_URL}/analyze-feedback`);
+
+        // Use the Dynamic URL (AI_URL) here too!
         const aiResponse = await axios.post(`${AI_URL}/analyze-feedback`, {
             feedback
         });
@@ -60,7 +55,8 @@ exports.analyzeFeedback = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(`❌ AI Analysis Error connecting to ${AI_URL}:`, error.message);
+        console.error(`❌ AI Analysis Failed (Target: ${AI_URL}):`, error.message);
+        // We return 500 so the frontend knows the AI failed (instead of failing silently)
         return res.status(500).json({ success: false, message: "AI Analysis Failed" });
     }
 };
