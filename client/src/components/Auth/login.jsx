@@ -40,7 +40,7 @@ export function Login() {
 
     // Friendly "Waking up server" message if it takes too long
     const slowServerTimer = setTimeout(() => {
-        setButtonText("Waking up server (may take 1 min)...");
+        setButtonText("Authenticating Secure Connection...");
     }, 3000);
 
     try {
