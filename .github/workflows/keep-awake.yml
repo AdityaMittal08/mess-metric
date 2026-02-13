@@ -1,0 +1,25 @@
+name: Keep Servers Awake
+
+# This triggers the action every 10 minutes automatically
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  # This allows you to run it manually from the GitHub website if needed
+  workflow_dispatch: 
+
+jobs:
+  ping-servers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Node API
+        run: |
+          curl -s https://mess-metric-api.onrender.com/health > /dev/null
+          echo "Node API Pinged!"
+
+      - name: Ping Python AI
+        # We use continue-on-error because even if it returns a 405/503, 
+        # the act of curling it is enough to wake the server up.
+        continue-on-error: true 
+        run: |
+          curl -s https://mess-metric-python.onrender.com/predict > /dev/null
+          echo "Python AI Pinged!"
