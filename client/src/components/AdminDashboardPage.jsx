@@ -19,7 +19,9 @@ import {
   CheckCircle,
   Clock,
   Send,
-  Star
+  Star,
+  Menu, 
+  X     
 } from "lucide-react";
 import { 
   LineChart, 
@@ -153,6 +155,8 @@ export function AdminDashboardPage() {
   const [adminName, setAdminName] = useState("Admin");
   const [messName, setMessName] = useState("Mess");
   const [loading, setLoading] = useState(true);
+  
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [menu, setMenu] = useState([]);
   const [feedbacks, setFeedbacks] = useState(MOCK_FEEDBACKS);
@@ -227,9 +231,10 @@ export function AdminDashboardPage() {
     navigate('/admin/login');
   };
 
-  const sidebarVariants = {
-    hidden: { x: -20, opacity: 0 },
-    visible: { x: 0, opacity: 1, transition: { duration: 0.5 } }
+  // Close sidebar when clicking a menu item on mobile
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setIsSidebarOpen(false);
   };
 
   const contentVariants = {
@@ -242,27 +247,41 @@ export function AdminDashboardPage() {
   return (
     <div className="flex min-h-screen bg-[#dbeafe] text-gray-800 font-sans overflow-hidden">
       
-      <motion.div 
-        variants={sidebarVariants}
-        initial="hidden"
-        animate="visible"
-        className="w-64 bg-[#1e3a8a] text-white flex flex-col shadow-2xl z-20"
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-20 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <div 
+        className={`fixed md:relative inset-y-0 left-0 z-30 w-64 bg-[#1e3a8a] text-white flex flex-col shadow-2xl transform transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
       >
-        <div className="p-6 border-b border-blue-800">
-          <div className="flex items-center gap-2 mb-1">
-             <div className="bg-white/10 p-2 rounded-lg">
-                <Utensils size={20} />
-             </div>
-             <h1 className="text-xl font-bold tracking-wide">MessMetric</h1>
+        <div className="p-6 border-b border-blue-800 flex justify-between items-center">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+               <div className="bg-white/10 p-2 rounded-lg">
+                  <Utensils size={20} />
+               </div>
+               <h1 className="text-xl font-bold tracking-wide">MessMetric</h1>
+            </div>
+            <p className="text-xs text-blue-300 ml-1">Admin Console • {messName}</p>
           </div>
-          <p className="text-xs text-blue-300 ml-1">Admin Console • {messName}</p>
+          <button 
+            onClick={() => setIsSidebarOpen(false)} 
+            className="md:hidden text-blue-200 hover:text-white"
+          >
+            <X size={24} />
+          </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
-          <SidebarItem icon={<LayoutDashboard size={20} />} label="Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
-          <SidebarItem icon={<Utensils size={20} />} label="Menu Management" active={activeTab === 'menu'} onClick={() => setActiveTab('menu')} />
-          <SidebarItem icon={<BrainCircuit size={20} />} label="AI Insights" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
-          <SidebarItem icon={<Users size={20} />} label="Student Feedback" active={activeTab === 'students'} onClick={() => setActiveTab('students')} />
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <SidebarItem icon={<LayoutDashboard size={20} />} label="Overview" active={activeTab === 'overview'} onClick={() => handleTabChange('overview')} />
+          <SidebarItem icon={<Utensils size={20} />} label="Menu Management" active={activeTab === 'menu'} onClick={() => handleTabChange('menu')} />
+          <SidebarItem icon={<BrainCircuit size={20} />} label="AI Insights" active={activeTab === 'ai'} onClick={() => handleTabChange('ai')} />
+          <SidebarItem icon={<Users size={20} />} label="Student Feedback" active={activeTab === 'students'} onClick={() => handleTabChange('students')} />
         </nav>
 
         <div className="p-4 border-t border-blue-800">
@@ -274,31 +293,41 @@ export function AdminDashboardPage() {
             <span className="font-medium">Sign Out</span>
           </button>
         </div>
-      </motion.div>
+      </div>
 
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden w-full">
         
-        <header className="bg-white/80 backdrop-blur-md shadow-sm px-8 py-5 flex justify-between items-center z-10">
-          <div>
-            <h2 className="text-2xl font-bold text-[#1e3a8a]">
-              {activeTab === 'overview' && 'Dashboard Overview'}
-              {activeTab === 'menu' && 'Menu Management'}
-              {activeTab === 'ai' && 'AI Analytics Engine'}
-              {activeTab === 'students' && 'Student Feedback Hub'}
-            </h2>
-            <p className="text-sm text-gray-500">Welcome back, {adminName}</p>
+        <header className="bg-white/80 backdrop-blur-md shadow-sm px-4 md:px-8 py-5 flex justify-between items-center z-10 shrink-0">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="md:hidden text-[#1e3a8a] p-1 rounded-md hover:bg-blue-50"
+            >
+              <Menu size={24} />
+            </button>
+
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-[#1e3a8a] truncate max-w-[200px] md:max-w-none">
+                {activeTab === 'overview' && 'Dashboard Overview'}
+                {activeTab === 'menu' && 'Menu Management'}
+                {activeTab === 'ai' && 'AI Analytics Engine'}
+                {activeTab === 'students' && 'Student Feedback'}
+              </h2>
+              <p className="text-xs md:text-sm text-gray-500 hidden md:block">Welcome back, {adminName}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-             <div className="bg-blue-50 px-4 py-2 rounded-full text-[#1e3a8a] text-sm font-semibold border border-blue-100">
-                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+
+          <div className="flex items-center gap-2 md:gap-4">
+             <div className="bg-blue-50 px-3 py-1 md:px-4 md:py-2 rounded-full text-[#1e3a8a] text-xs md:text-sm font-semibold border border-blue-100 hidden sm:block">
+                {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
              </div>
-             <div className="h-10 w-10 bg-[#1e3a8a] rounded-full flex items-center justify-center text-white font-bold">
+             <div className="h-8 w-8 md:h-10 md:w-10 bg-[#1e3a8a] rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base">
                 {adminName.charAt(0)}
              </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-20 md:pb-8">
            <AnimatePresence mode="wait">
              
              {activeTab === 'overview' && (
@@ -309,15 +338,15 @@ export function AdminDashboardPage() {
                  animate="visible"
                  className="space-y-6"
                >
-                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                    <StatCard title="Total Students" value="1,245" sub="+12 this week" icon={<Users className="text-blue-600" />} color="bg-blue-50" />
                    <StatCard title="Today's Attendance" value="89%" sub="Lunch Service" icon={<TrendingUp className="text-green-600" />} color="bg-green-50" />
                    <StatCard title="Waste Index" value="12kg" sub="-5% from yesterday" icon={<Leaf className="text-emerald-600" />} color="bg-emerald-50" />
                    <StatCard title="Pending Feedback" value={feedbacks.filter(f => f.status === 'unread').length} sub="Needs Attention" icon={<MessageSquare className="text-orange-600" />} color="bg-orange-50" />
                  </div>
 
-                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[400px]">
-                    <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col">
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col h-[350px] md:h-[400px]">
                        <h3 className="text-lg font-bold text-gray-800 mb-4">Weekly Attendance Trends</h3>
                        <div className="flex-1 w-full min-h-0">
                          <ResponsiveContainer width="100%" height="100%">
@@ -334,7 +363,7 @@ export function AdminDashboardPage() {
                        </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col">
+                    <div className="bg-white p-4 md:p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col h-[350px] md:h-[400px]">
                        <h3 className="text-lg font-bold text-gray-800 mb-4">Daily Waste Breakdown</h3>
                        <div className="flex-1 w-full min-h-0">
                           <ResponsiveContainer width="100%" height="100%">
@@ -359,18 +388,18 @@ export function AdminDashboardPage() {
              {activeTab === 'menu' && (
                <motion.div key="menu" variants={contentVariants} initial="hidden" animate="visible">
                   <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-blue-50/30">
+                    <div className="p-4 md:p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-blue-50/30">
                        <div>
                          <h3 className="text-lg font-bold text-[#1e3a8a]">Weekly Menu Configuration</h3>
                          <p className="text-sm text-gray-500">Managing menu for {messName}</p>
                        </div>
-                       <button className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 transition-colors shadow-lg shadow-blue-900/20">
+                       <button className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 transition-colors shadow-lg shadow-blue-900/20 w-full md:w-auto justify-center">
                          <Edit size={16} />
                          Edit Menu
                        </button>
                     </div>
                     <div className="p-0 overflow-x-auto">
-                      <table className="w-full text-left border-collapse">
+                      <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead className="bg-[#1e3a8a]/5 text-[#1e3a8a] text-xs font-bold uppercase tracking-wider">
                           <tr>
                             <th className="p-4">Day</th>
@@ -405,20 +434,20 @@ export function AdminDashboardPage() {
 
              {activeTab === 'ai' && (
                 <motion.div key="ai" variants={contentVariants} initial="hidden" animate="visible" className="max-w-4xl mx-auto">
-                   <div className="bg-gradient-to-br from-[#1e3a8a] to-[#2563eb] rounded-3xl p-8 text-white shadow-xl relative overflow-hidden mb-8">
+                   <div className="bg-gradient-to-br from-[#1e3a8a] to-[#2563eb] rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden mb-8">
                       <div className="absolute top-0 right-0 p-8 opacity-10">
                         <BrainCircuit size={150} />
                       </div>
                       
                       <div className="relative z-10">
-                        <h2 className="text-3xl font-bold mb-2">AI Prediction Engine</h2>
-                        <p className="text-blue-200 mb-8 max-w-lg">
+                        <h2 className="text-2xl md:text-3xl font-bold mb-2">AI Prediction Engine</h2>
+                        <p className="text-blue-200 mb-8 max-w-lg text-sm md:text-base">
                           Utilize our advanced machine learning model to forecast food waste and optimize production quantity.
                         </p>
                         <button 
                           onClick={handleAiPrediction}
                           disabled={isPredicting}
-                          className="flex items-center gap-2 bg-white text-[#1e3a8a] px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                          className="flex items-center justify-center gap-2 bg-white text-[#1e3a8a] px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed w-full md:w-auto"
                         >
                           {isPredicting ? <Loader2 className="animate-spin" /> : <BrainCircuit size={20} />}
                           {isPredicting ? "Running Analysis..." : "Run Waste Prediction"}
@@ -435,20 +464,20 @@ export function AdminDashboardPage() {
                        >
                          <div className="bg-green-50 p-4 border-b border-green-100 flex items-center gap-2 text-green-800">
                             <Leaf size={20} />
-                            <span className="font-bold">Prediction Results Generated Successfully</span>
+                            <span className="font-bold text-sm md:text-base">Prediction Results Generated Successfully</span>
                          </div>
-                         <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                         <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                             <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                <p className="text-gray-500 text-sm font-medium uppercase mb-1">Predicted Waste</p>
-                               <p className="text-4xl font-bold text-red-500">{aiPrediction.predictedWaste} <span className="text-lg text-gray-400">kg</span></p>
+                               <p className="text-3xl md:text-4xl font-bold text-red-500">{aiPrediction.predictedWaste} <span className="text-lg text-gray-400">kg</span></p>
                             </div>
                             <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                <p className="text-gray-500 text-sm font-medium uppercase mb-1">Model Confidence</p>
-                               <p className="text-4xl font-bold text-[#1e3a8a]">{aiPrediction.confidence}<span className="text-lg text-gray-400">%</span></p>
+                               <p className="text-3xl md:text-4xl font-bold text-[#1e3a8a]">{aiPrediction.confidence}<span className="text-lg text-gray-400">%</span></p>
                             </div>
                             <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                <p className="text-gray-500 text-sm font-medium uppercase mb-1">Recommendation</p>
-                               <p className="text-lg font-bold text-emerald-600 mt-2">{aiPrediction.recommendation}</p>
+                               <p className="text-md md:text-lg font-bold text-emerald-600 mt-2">{aiPrediction.recommendation}</p>
                             </div>
                          </div>
                        </motion.div>
@@ -460,16 +489,16 @@ export function AdminDashboardPage() {
              {activeTab === 'students' && (
                 <motion.div key="students" variants={contentVariants} initial="hidden" animate="visible" className="space-y-6">
                    
-                   <div className="flex justify-between items-end">
+                   <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                       <div>
                         <h3 className="text-2xl font-bold text-[#1e3a8a]">Student Feedback</h3>
                         <p className="text-gray-500">Manage student complaints, reviews, and suggestions.</p>
                       </div>
-                      <div className="flex gap-2">
-                         <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 text-sm font-medium text-gray-600">
+                      <div className="flex gap-2 w-full md:w-auto">
+                         <div className="flex-1 md:flex-none bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 text-sm font-medium text-gray-600 text-center">
                             Total: <span className="text-[#1e3a8a] font-bold">{feedbacks.length}</span>
                          </div>
-                         <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 text-sm font-medium text-gray-600">
+                         <div className="flex-1 md:flex-none bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 text-sm font-medium text-gray-600 text-center">
                             Unread: <span className="text-red-500 font-bold">{feedbacks.filter(f => f.status === 'unread').length}</span>
                          </div>
                       </div>
@@ -479,13 +508,13 @@ export function AdminDashboardPage() {
                       {feedbacks.map((feedback) => (
                          <div 
                            key={feedback.id} 
-                           className={`bg-white rounded-2xl p-6 shadow-md border-l-4 transition-all ${
+                           className={`bg-white rounded-2xl p-4 md:p-6 shadow-md border-l-4 transition-all ${
                              feedback.status === 'unread' ? 'border-l-orange-400' : 'border-l-green-400 opacity-90'
                            }`}
                          >
-                            <div className="flex justify-between items-start mb-3">
+                            <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-2 sm:gap-0">
                                <div className="flex gap-3">
-                                  <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center text-[#1e3a8a] font-bold">
+                                  <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center text-[#1e3a8a] font-bold shrink-0">
                                      {feedback.student.charAt(0)}
                                   </div>
                                   <div>
@@ -493,7 +522,7 @@ export function AdminDashboardPage() {
                                      <p className="text-xs text-gray-500">{feedback.regNo}</p>
                                   </div>
                                </div>
-                               <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
+                               <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-md self-start sm:self-center">
                                   <Clock size={12} />
                                   {feedback.timestamp}
                                </div>
@@ -505,17 +534,17 @@ export function AdminDashboardPage() {
                                      <Star key={i} size={16} className={`${i < feedback.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
                                   ))}
                                </div>
-                               <p className="text-gray-700">{feedback.comment}</p>
+                               <p className="text-gray-700 text-sm md:text-base">{feedback.comment}</p>
                             </div>
 
                             {feedback.reply && (
-                               <div className="mb-4 ml-4 pl-4 border-l-2 border-gray-200 bg-gray-50 p-3 rounded-r-lg">
+                               <div className="mb-4 ml-0 md:ml-4 md:pl-4 border-l-0 md:border-l-2 border-gray-200 bg-gray-50 p-3 rounded-lg md:rounded-r-lg md:rounded-l-none">
                                   <p className="text-xs font-bold text-[#1e3a8a] mb-1">Your Reply:</p>
                                   <p className="text-sm text-gray-600">{feedback.reply}</p>
                                </div>
                             )}
 
-                            <div className="flex flex-wrap items-center justify-between border-t border-gray-100 pt-4 mt-2">
+                            <div className="flex flex-wrap items-center justify-between border-t border-gray-100 pt-4 mt-2 gap-3">
                                <div className="flex gap-4">
                                   <button 
                                     onClick={() => handleReaction(feedback.id, 'like')}
@@ -534,7 +563,7 @@ export function AdminDashboardPage() {
                                     onClick={() => setActiveReplyId(activeReplyId === feedback.id ? null : feedback.id)}
                                     className={`flex items-center gap-1 text-sm font-medium transition-colors ${activeReplyId === feedback.id ? 'text-[#1e3a8a]' : 'text-gray-500 hover:text-[#1e3a8a]'}`}
                                   >
-                                     <MessageSquare size={16} /> Reply
+                                     <MessageSquare size={16} /> <span className="hidden sm:inline">Reply</span>
                                   </button>
                                </div>
 
