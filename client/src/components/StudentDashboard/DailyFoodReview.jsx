@@ -78,7 +78,10 @@ export function DailyFoodReview() {
     // 1. Call AI if there is a comment
     if (comment.trim().length > 3) {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        // Automatically detects if you are on your laptop or on Vercel
+        const API_URL = window.location.hostname === 'localhost' 
+          ? 'http://localhost:5000' 
+          : 'https://mess-metric-api.onrender.com';
         const response = await axios.post(`${API_URL}/api/ai/analyze`, {
           feedback: comment
         });
@@ -94,7 +97,31 @@ export function DailyFoodReview() {
     setIsSubmittedAnimation(true);
     setIsAnalyzing(false);
 
-    // 2. Save locally
+    // 2. Save to backend
+    // Automatically detects if you are on your laptop or on Vercel
+    const API_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:5000' 
+      : 'https://mess-metric-api.onrender.com';
+    const token = localStorage.getItem("token");
+    try {
+      await axios.post(
+        `${API_URL}/api/food-reviews`,
+        {
+          mealType: selectedMeal,
+          rating,
+          tags: selectedTags,
+          comment: comment.trim(),
+          aiAnalysis: analysis ? { score: analysis.score, keywords: analysis.keywords || [] } : null
+        },
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }
+      );
+    } catch (backendError) {
+      console.error("Failed to save review to backend:", backendError);
+    }
+
+    // 3. Save locally (fallback for reviewedMeals state)
     const updatedReviewed = [...reviewedMeals, selectedMeal];
     setReviewedMeals(updatedReviewed);
 

@@ -1,6 +1,10 @@
 const axios = require('axios');
 
-// Controller to handle AI prediction requests
+// 👇 FINAL SMART CONFIGURATION
+// 1. If 'AI_ENGINE_URL' exists (Render), use it.
+// 2. If not (Localhost), default to 'http://127.0.0.1:5001'.
+const AI_URL = process.env.AI_ENGINE_URL || 'http://127.0.0.1:5001';
+
 exports.getPrediction = async (req, res) => {
     try {
         const { attendance, day_of_week, is_weekend, is_special_event } = req.body;
@@ -12,8 +16,7 @@ exports.getPrediction = async (req, res) => {
             });
         }
 
-        // Call Python AI Engine
-        const aiResponse = await axios.post('http://127.0.0.1:5001/predict', {
+        const aiResponse = await axios.post(`${AI_URL}/predict`, {
             attendance,
             day_of_week,
             is_weekend,
@@ -26,15 +29,11 @@ exports.getPrediction = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ AI Prediction Error:", error.message);
-        if (error.code === 'ECONNREFUSED') {
-            return res.status(503).json({ success: false, message: "AI Engine is offline." });
-        }
-        return res.status(500).json({ success: false, message: "Server Error." });
+        console.error(`❌ AI Prediction Error (${AI_URL}):`, error.message);
+        return res.status(500).json({ success: false, message: "AI Engine is offline." });
     }
 };
 
-// 👇 NEW: Controller to handle Sentiment Analysis
 exports.analyzeFeedback = async (req, res) => {
     try {
         const { feedback } = req.body;
@@ -43,8 +42,9 @@ exports.analyzeFeedback = async (req, res) => {
             return res.status(400).json({ success: false, message: "Feedback text is required." });
         }
 
-        // Call Python AI for Sentiment Analysis
-        const aiResponse = await axios.post('http://127.0.0.1:5001/analyze-feedback', {
+        console.log(`📡 Connecting to AI at: ${AI_URL}/analyze-feedback`);
+
+        const aiResponse = await axios.post(`${AI_URL}/analyze-feedback`, {
             feedback
         });
 
@@ -54,7 +54,7 @@ exports.analyzeFeedback = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ AI Analysis Error:", error.message);
+        console.error(`❌ AI Analysis Failed (Target: ${AI_URL}):`, error.message);
         return res.status(500).json({ success: false, message: "AI Analysis Failed" });
     }
 };

@@ -11,12 +11,24 @@ const connectDB = require("./config/db");
 const app = express();
 
 // ==========================================
-// 1. CORS CONFIGURATION (Crucial for Vercel)
+// 1. CORS CONFIGURATION
 // ==========================================
-// I have replaced the complex logic with this wildcard to force it to work.
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://mess-metric.vercel.app"
+];
+
 app.use(cors({
-  origin: "*",  // Allow all connections
-  credentials: false, // <--- THIS WAS THE PROBLEM. Must be false if origin is "*"
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -24,11 +36,10 @@ app.use(cors({
 // ==========================================
 // 2. MIDDLEWARE
 // ==========================================
-app.use(express.json()); // Parse JSON bodies
+app.use(express.json());
 
-// Request Logger (Helps debugging)
 app.use((req, res, next) => {
-  console.log(`[Request] ${req.method} ${req.url}`);
+  console.log(`[Request] ${req.method} ${req.url} | Origin: ${req.headers.origin}`);
   next();
 });
 
@@ -51,17 +62,18 @@ app.get("/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
-// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/ai", aiRoutes);
 
-// Inline requires (cleaner way to load these)
+// 👇 THIS WAS MISSING! ADD THIS LINE:
+app.use("/api/food-reviews", require("./routes/foodReview.routes")); 
+
 app.use("/api/admin/auth", require("./routes/admin.auth.routes"));
 app.use("/api/attendance", require("./routes/attendance.routes"));
 app.use("/api/menu", require("./routes/menu.routes"));
 
-// Error Handling Middleware
+// Error Handling
 app.use((err, req, res, next) => {
   console.error("❌ Server Error:", err);
   res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -73,5 +85,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 Backend URL: http://localhost:${PORT}`);
+  console.log(`Allowed Origins:`, allowedOrigins);
 });
