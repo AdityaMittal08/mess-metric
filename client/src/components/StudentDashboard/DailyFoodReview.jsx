@@ -78,7 +78,10 @@ export function DailyFoodReview() {
     // 1. Call AI if there is a comment
     if (comment.trim().length > 3) {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        // Automatically detects if you are on your laptop or on Vercel
+        const API_URL = window.location.hostname === 'localhost' 
+          ? 'http://localhost:5000' 
+          : 'https://mess-metric-api.onrender.com';
         const response = await axios.post(`${API_URL}/api/ai/analyze`, {
           feedback: comment
         });
@@ -95,7 +98,10 @@ export function DailyFoodReview() {
     setIsAnalyzing(false);
 
     // 2. Save to backend
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    // Automatically detects if you are on your laptop or on Vercel
+    const API_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:5000' 
+      : 'https://mess-metric-api.onrender.com';
     const token = localStorage.getItem("token");
     try {
       await axios.post(
