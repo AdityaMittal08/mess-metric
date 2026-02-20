@@ -6,7 +6,7 @@
  *
  * Usage: node simulation/smartBin.js
  */
-
+require('../server/node_modules/dotenv').config({ path: '../server/.env' });
 const connectDB = require('../server/config/db');
 const WasteLog = require('../server/models/WasteLog');
 

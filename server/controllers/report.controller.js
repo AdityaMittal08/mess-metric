@@ -17,3 +17,14 @@ exports.monthlyReport = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Could not generate report.' });
   }
 };
+
+exports.getLiveWaste = async (req, res) => {
+  try {
+    // Fetch the 20 most recent logs, sorted by newest first
+    const logs = await WasteLog.find().sort({ createdAt: -1 }).limit(20);
+    res.status(200).json({ success: true, data: logs });
+  } catch (error) {
+    console.error("Error fetching live waste data:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Coffee, Sun, Sunset, Moon, Check, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Coffee, Sun, Sunset, Moon, Check, X, Loader2 } from "lucide-react";
+import axios from "axios";
 
 const weeklyMenu = {
   Monday: [
@@ -46,7 +47,13 @@ const weeklyMenu = {
   ],
 };
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export function DailyMealTracker({user}) {
+  const [mealStatus, setMealStatus] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(null);
+
   const todayDate = new Date();
   const currentDayName = todayDate.toLocaleDateString('en-US', { weekday: 'long' }); 
   const formattedDate = todayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
@@ -67,36 +74,93 @@ export function DailyMealTracker({user}) {
 
   if (hour >= 5 && hour < 12) greeting = "Good Morning";
   else if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
-  else if (hour >= 17 && hour < 21) greeting = "Good Evening";
+  else if (hour >= 17 && hour < 24) greeting = "Good Evening";
 
-  const [mealStatus, setMealStatus] = useState(() => {
-    const todaysMenu = weeklyMenu[currentDayName] || weeklyMenu["Monday"];
-    
-    return todaysMenu.map((meal, index) => ({
-      ...meal,
-      id: index,
-      isEating: true
-    }));
-  });
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        // Attempt to fetch from backend
+        const res = await axios.get(`${API_URL}/api/menu/today`);
+        
+        // Map backend response to tracker format. Adjust icons based on type.
+        const icons = { Breakfast: Coffee, Lunch: Sun, Snacks: Sunset, Dinner: Moon };
+        const fetchedMeals = res.data.data.map((meal, index) => ({
+          id: meal._id || index,
+          type: meal.type,
+          time: meal.time || "Scheduled",
+          menu: meal.items.join(", "),
+          icon: icons[meal.type] || Sun,
+          isEating: true // Default assumed attending until marked skipped
+        }));
+        setMealStatus(fetchedMeals);
+      } catch (error) {
+        console.warn("Failed to fetch menu, falling back to local state.");
+        // Basic fallback if backend isn't populated
+        setMealStatus([
+          { id: "b1", type: "Breakfast", time: "07:30 - 09:30", menu: "Idli, Vada, Sambar", icon: Coffee, isEating: true },
+          { id: "l1", type: "Lunch", time: "12:30 - 14:30", menu: "Rajma Chawal, Mix Veg", icon: Sun, isEating: true },
+          { id: "s1", type: "Snacks", time: "17:00 - 18:00", menu: "Samosa, Tea", icon: Sunset, isEating: true },
+          { id: "d1", type: "Dinner", time: "19:30 - 21:30", menu: "Aloo Gobhi, Dal Fry", icon: Moon, isEating: true },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMenu();
+  }, []);
   
-  const toggleMeal = (id) => {
-    setMealStatus((prevMeals) =>
-      prevMeals.map((meal) =>
-        meal.id === id ? { ...meal, isEating: !meal.isEating } : meal
-      )
-    );
+  const toggleMeal = async (id, type, currentStatus) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please log in to track meals.");
+      return;
+    }
+
+    setIsUpdating(id);
+    const newStatus = !currentStatus;
+
+    try {
+      // Optimistic UI Update
+      setMealStatus((prevMeals) =>
+        prevMeals.map((meal) => meal.id === id ? { ...meal, isEating: newStatus } : meal)
+      );
+
+      // Call Backend
+      await axios.post(`${API_URL}/api/attendance/mark`, 
+        { 
+          mealType: type, 
+          status: newStatus ? "present" : "absent" 
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+    } catch (error) {
+      console.error("Failed to update attendance:", error);
+      // Revert UI on failure
+      setMealStatus((prevMeals) =>
+        prevMeals.map((meal) => meal.id === id ? { ...meal, isEating: currentStatus } : meal)
+      );
+      alert("Network error. Could not update attendance.");
+    } finally {
+      setIsUpdating(null);
+    }
   };
 
-  if (!user) {
-    return <div className="p-4 text-gray-500">Loading tracker...</div>;
+  if (!user || loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-emerald-600 animate-pulse">
+        <Loader2 className="w-8 h-8 animate-spin mb-4" />
+        <p className="font-medium">Loading your meals...</p>
+      </div>
+    );
   }
   
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
       
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-800">
-          {greeting}, <span className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">{user.name || 'student'}</span>
+          {greeting}, <span className="bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">{user.name || 'Student'}</span>
         </h1>
         <p className="text-slate-500 mt-1 flex items-center gap-2">
           <span className="bg-emerald-100 px-2 py-0.5 rounded text-sm font-bold text-emerald-800">
@@ -112,6 +176,7 @@ export function DailyMealTracker({user}) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {mealStatus.map((meal) => {
           const Icon = meal.icon;
+          const isProcessing = isUpdating === meal.id;
           
           return (
             <div 
@@ -128,16 +193,21 @@ export function DailyMealTracker({user}) {
                     <Icon className="w-6 h-6" />
                   </div>
                   <button
-                    onClick={() => toggleMeal(meal.id)}
-                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                    onClick={() => toggleMeal(meal.id, meal.type, meal.isEating)}
+                    disabled={isProcessing}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none disabled:opacity-50 ${
                       meal.isEating ? "bg-emerald-500" : "bg-slate-300"
                     }`}
                   >
-                    <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${
-                        meal.isEating ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
+                    {isProcessing ? (
+                      <Loader2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white animate-spin" />
+                    ) : (
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${
+                          meal.isEating ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    )}
                   </button>
                 </div>
 

@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { Download } from "lucide-react";
+import { Calculator } from "lucide-react";
+import { LiveWasteMonitor } from "./AdminDashboard/LiveWasteMonitor";
 import { 
   LayoutDashboard, 
   Utensils, 
@@ -149,6 +153,8 @@ const MOCK_FEEDBACKS = [
   }
 ];
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export function AdminDashboardPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
@@ -160,8 +166,16 @@ export function AdminDashboardPage() {
 
   const [menu, setMenu] = useState([]);
   const [feedbacks, setFeedbacks] = useState(MOCK_FEEDBACKS);
-  const [aiPrediction, setAiPrediction] = useState(null);
+
+  // AI Prediction States
   const [isPredicting, setIsPredicting] = useState(false);
+  const [aiPrediction, setAiPrediction] = useState(null);
+  const [predictParams, setPredictParams] = useState({ attendance: 1200, day_of_week: 0, is_weekend: 0, is_special_event: 0 });
+
+  // AI Procurement States
+  const [isCalculatingProcurement, setIsCalculatingProcurement] = useState(false);
+  const [procurementData, setProcurementData] = useState(null);
+  const [procurementStudents, setProcurementStudents] = useState(1200);
 
   const [replyText, setReplyText] = useState({}); 
   const [activeReplyId, setActiveReplyId] = useState(null);
@@ -177,10 +191,65 @@ export function AdminDashboardPage() {
 
     setAdminName(adminData.name);
     setMessName(adminData.messName);
-    
     setMenu(MOCK_MENU_DATA); 
     setLoading(false);
-  }, []);
+  }, [navigate]);
+
+  const handleAiPrediction = async () => {
+    setIsPredicting(true);
+    setAiPrediction(null);
+    try {
+      const res = await axios.post(`${API_URL}/api/ai/predict`, predictParams);
+      // Assuming AI returns { predicted_waste_kg: 18.5 } directly or wrapped in { data: ... }
+      const waste = res.data.predicted_waste_kg || res.data.data?.predicted_waste_kg || 0;
+      
+      setAiPrediction({
+        predictedWaste: parseFloat(waste).toFixed(2),
+        confidence: (90 + Math.random() * 5).toFixed(1), // Mock confidence if model doesn't return it
+        recommendation: waste > 25 ? "High waste expected. Reduce batch sizes by 10%." : "Waste levels look normal. Proceed with standard cooking quantities."
+      });
+    } catch (error) {
+      console.error("Prediction Error", error);
+      alert("Failed to connect to AI Engine.");
+    } finally {
+      setIsPredicting(false);
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/reports/monthly`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob' // Assuming backend sends a file/CSV
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Monthly_Report_${new Date().getMonth() + 1}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Report generation failed:", error);
+      alert("Report generation is not available right now.");
+    }
+  };
+
+  const handleProcurement = async () => {
+    setIsCalculatingProcurement(true);
+    setProcurementData(null);
+    try {
+      const res = await axios.post(`${API_URL}/api/ai/procurement`, { students: procurementStudents });
+      setProcurementData(res.data.data || res.data.ingredients || []); 
+    } catch (error) {
+      console.error("Procurement Error", error);
+      alert("Failed to calculate procurement.");
+    } finally {
+      setIsCalculatingProcurement(false);
+    }
+  };
 
   const toggleReadStatus = (id) => {
     setFeedbacks(prev => prev.map(f => 
@@ -206,23 +275,6 @@ export function AdminDashboardPage() {
     ));
     setActiveReplyId(null);
     setReplyText(prev => ({...prev, [id]: ''}));
-  };
-
-  const handleAiPrediction = async () => {
-    setIsPredicting(true);
-    setAiPrediction(null);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setAiPrediction({
-        predictedWaste: 18.5,
-        confidence: 94,
-        recommendation: "High waste expected for Rice. Reduce production by 8%."
-      });
-    } catch (error) {
-      console.error("Prediction Error");
-    } finally {
-      setIsPredicting(false);
-    }
   };
 
   const handleLogout = () => {
@@ -338,6 +390,22 @@ export function AdminDashboardPage() {
                  animate="visible"
                  className="space-y-6"
                >
+
+                <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800">Quick Actions</h3>
+                      <p className="text-sm text-gray-500">Manage your monthly analytics</p>
+                    </div>
+                    <button 
+                      onClick={handleDownloadReport}
+                      className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-md"
+                    >
+                      <Download size={18} />
+                      <span className="hidden sm:inline">Download Monthly Report</span>
+                    </button>
+                 </div>
+
+
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                    <StatCard title="Total Students" value="1,245" sub="+12 this week" icon={<Users className="text-blue-600" />} color="bg-blue-50" />
                    <StatCard title="Today's Attendance" value="89%" sub="Lunch Service" icon={<TrendingUp className="text-green-600" />} color="bg-green-50" />
@@ -363,23 +431,8 @@ export function AdminDashboardPage() {
                        </div>
                     </div>
 
-                    <div className="bg-white p-4 md:p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col h-[350px] md:h-[400px]">
-                       <h3 className="text-lg font-bold text-gray-800 mb-4">Daily Waste Breakdown</h3>
-                       <div className="flex-1 w-full min-h-0">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={[
-                              { name: 'Rice', waste: 40 },
-                              { name: 'Curry', waste: 25 },
-                              { name: 'Veg', waste: 15 },
-                              { name: 'Bread', waste: 10 },
-                            ]}>
-                              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                              <XAxis dataKey="name" tick={{fontSize: 12}} />
-                              <Tooltip cursor={{fill: '#f3f4f6'}} />
-                              <Bar dataKey="waste" fill="#f87171" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                          </ResponsiveContainer>
-                       </div>
+                    <div className="flex flex-col h-[350px] md:h-[400px]">
+                      <LiveWasteMonitor />
                     </div>
                  </div>
                </motion.div>
@@ -433,56 +486,151 @@ export function AdminDashboardPage() {
              )}
 
              {activeTab === 'ai' && (
-                <motion.div key="ai" variants={contentVariants} initial="hidden" animate="visible" className="max-w-4xl mx-auto">
-                   <div className="bg-gradient-to-br from-[#1e3a8a] to-[#2563eb] rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden mb-8">
-                      <div className="absolute top-0 right-0 p-8 opacity-10">
-                        <BrainCircuit size={150} />
-                      </div>
-                      
-                      <div className="relative z-10">
-                        <h2 className="text-2xl md:text-3xl font-bold mb-2">AI Prediction Engine</h2>
-                        <p className="text-blue-200 mb-8 max-w-lg text-sm md:text-base">
-                          Utilize our advanced machine learning model to forecast food waste and optimize production quantity.
-                        </p>
-                        <button 
-                          onClick={handleAiPrediction}
-                          disabled={isPredicting}
-                          className="flex items-center justify-center gap-2 bg-white text-[#1e3a8a] px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed w-full md:w-auto"
-                        >
-                          {isPredicting ? <Loader2 className="animate-spin" /> : <BrainCircuit size={20} />}
-                          {isPredicting ? "Running Analysis..." : "Run Waste Prediction"}
-                        </button>
+                <motion.div key="ai" variants={contentVariants} initial="hidden" animate="visible" className="max-w-5xl mx-auto space-y-8">
+                   
+                   {/* 1. WASTE PREDICTION SECTION */}
+                   <div className="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-blue-50 relative overflow-hidden">
+                      <div className="flex flex-col md:flex-row gap-8 items-start">
+                        <div className="flex-1">
+                          <h2 className="text-2xl md:text-3xl font-bold text-[#1e3a8a] mb-2 flex items-center gap-2">
+                            <BrainCircuit /> Waste Forecaster
+                          </h2>
+                          <p className="text-gray-500 mb-6 text-sm md:text-base">
+                            Tweak the parameters below to run our ML model and predict expected food waste in kilograms.
+                          </p>
+                          
+                          <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div>
+                              <label className="block text-sm font-bold text-gray-700 mb-1">Expected Attendance</label>
+                              <input 
+                                type="number" 
+                                value={predictParams.attendance}
+                                onChange={(e) => setPredictParams({...predictParams, attendance: Number(e.target.value)})}
+                                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" 
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-bold text-gray-700 mb-1">Day of Week (0-6)</label>
+                              <select 
+                                value={predictParams.day_of_week}
+                                onChange={(e) => setPredictParams({...predictParams, day_of_week: Number(e.target.value)})}
+                                className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                              >
+                                <option value="0">Monday</option>
+                                <option value="1">Tuesday</option>
+                                <option value="2">Wednesday</option>
+                                <option value="3">Thursday</option>
+                                <option value="4">Friday</option>
+                                <option value="5">Saturday</option>
+                                <option value="6">Sunday</option>
+                              </select>
+                            </div>
+                            <div className="flex items-center gap-2 mt-2">
+                              <input 
+                                type="checkbox" id="isWeekend" 
+                                checked={predictParams.is_weekend === 1}
+                                onChange={(e) => setPredictParams({...predictParams, is_weekend: e.target.checked ? 1 : 0})}
+                                className="w-4 h-4 text-blue-600 rounded" 
+                              />
+                              <label htmlFor="isWeekend" className="text-sm font-bold text-gray-700">Is Weekend?</label>
+                            </div>
+                            <div className="flex items-center gap-2 mt-2">
+                              <input 
+                                type="checkbox" id="isSpecial" 
+                                checked={predictParams.is_special_event === 1}
+                                onChange={(e) => setPredictParams({...predictParams, is_special_event: e.target.checked ? 1 : 0})}
+                                className="w-4 h-4 text-blue-600 rounded" 
+                              />
+                              <label htmlFor="isSpecial" className="text-sm font-bold text-gray-700">Special Event / Fest?</label>
+                            </div>
+                          </div>
+
+                          <button 
+                            onClick={handleAiPrediction}
+                            disabled={isPredicting}
+                            className="flex items-center justify-center gap-2 bg-[#1e3a8a] text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-blue-900 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed w-full md:w-auto"
+                          >
+                            {isPredicting ? <Loader2 className="animate-spin" /> : <BrainCircuit size={20} />}
+                            {isPredicting ? "Analyzing..." : "Run AI Prediction"}
+                          </button>
+                        </div>
+
+                        {/* Prediction Result Card */}
+                        <div className="flex-1 w-full">
+                          {aiPrediction ? (
+                            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-blue-50 p-6 rounded-2xl border border-blue-100 h-full flex flex-col justify-center">
+                              <p className="text-blue-800 font-bold mb-4 uppercase tracking-wider text-sm">Prediction Results</p>
+                              <div className="flex items-end gap-2 mb-4">
+                                <span className="text-5xl font-black text-red-500">{aiPrediction.predictedWaste}</span>
+                                <span className="text-xl text-gray-500 font-bold mb-1">kg Waste</span>
+                              </div>
+                              <div className="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
+                                <p className="text-xs text-gray-500 uppercase font-bold mb-1">AI Recommendation</p>
+                                <p className="text-emerald-700 font-medium text-sm">{aiPrediction.recommendation}</p>
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <div className="h-full min-h-[200px] border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center text-gray-400">
+                               Waiting for parameters...
+                            </div>
+                          )}
+                        </div>
                       </div>
                    </div>
 
-                   <AnimatePresence>
-                     {aiPrediction && (
-                       <motion.div 
-                         initial={{ opacity: 0, y: 20 }}
-                         animate={{ opacity: 1, y: 0 }}
-                         className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden"
-                       >
-                         <div className="bg-green-50 p-4 border-b border-green-100 flex items-center gap-2 text-green-800">
-                            <Leaf size={20} />
-                            <span className="font-bold text-sm md:text-base">Prediction Results Generated Successfully</span>
-                         </div>
-                         <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                            <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                               <p className="text-gray-500 text-sm font-medium uppercase mb-1">Predicted Waste</p>
-                               <p className="text-3xl md:text-4xl font-bold text-red-500">{aiPrediction.predictedWaste} <span className="text-lg text-gray-400">kg</span></p>
-                            </div>
-                            <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                               <p className="text-gray-500 text-sm font-medium uppercase mb-1">Model Confidence</p>
-                               <p className="text-3xl md:text-4xl font-bold text-[#1e3a8a]">{aiPrediction.confidence}<span className="text-lg text-gray-400">%</span></p>
-                            </div>
-                            <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                               <p className="text-gray-500 text-sm font-medium uppercase mb-1">Recommendation</p>
-                               <p className="text-md md:text-lg font-bold text-emerald-600 mt-2">{aiPrediction.recommendation}</p>
-                            </div>
-                         </div>
-                       </motion.div>
-                     )}
-                   </AnimatePresence>
+                   {/* 2. PROCUREMENT CALCULATOR SECTION */}
+                   <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+                      <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
+                        <div className="flex-1">
+                          <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Calculator /> Smart Procurement</h2>
+                          <p className="text-slate-300 mb-6 text-sm">Input the expected student footfall to instantly generate the raw material requirements for the day.</p>
+                          <div className="flex gap-4">
+                             <input 
+                               type="number" 
+                               value={procurementStudents}
+                               onChange={(e) => setProcurementStudents(Number(e.target.value))}
+                               className="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500 w-32 font-bold"
+                             />
+                             <button 
+                               onClick={handleProcurement}
+                               disabled={isCalculatingProcurement}
+                               className="bg-emerald-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+                             >
+                               {isCalculatingProcurement ? <Loader2 className="animate-spin" size={18} /> : null}
+                               Calculate Raw Materials
+                             </button>
+                          </div>
+                        </div>
+
+                        {procurementData && (
+                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 w-full bg-slate-800 rounded-xl p-4 border border-slate-700 max-h-60 overflow-y-auto">
+                            <table className="w-full text-left text-sm">
+                               <thead>
+                                 <tr className="text-slate-400 border-b border-slate-700">
+                                   <th className="pb-2">Ingredient</th>
+                                   <th className="pb-2 text-right">Quantity Required</th>
+                                 </tr>
+                               </thead>
+                               <tbody>
+                                 {/* Fallback mock mapping if backend structure differs */}
+                                 {(Array.isArray(procurementData) ? procurementData : [
+                                   { name: "Rice", qty: (procurementStudents * 0.15).toFixed(1) + " kg" },
+                                   { name: "Dal", qty: (procurementStudents * 0.05).toFixed(1) + " kg" },
+                                   { name: "Vegetables", qty: (procurementStudents * 0.2).toFixed(1) + " kg" },
+                                   { name: "Cooking Oil", qty: (procurementStudents * 0.02).toFixed(1) + " L" }
+                                 ]).map((item, idx) => (
+                                   <tr key={idx} className="border-b border-slate-700/50">
+                                     <td className="py-2 font-medium">{item.name}</td>
+                                     <td className="py-2 text-right text-emerald-400 font-bold">{item.qty}</td>
+                                   </tr>
+                                 ))}
+                               </tbody>
+                            </table>
+                          </motion.div>
+                        )}
+                      </div>
+                   </div>
+
                 </motion.div>
              )}
 
