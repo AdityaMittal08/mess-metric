@@ -88,6 +88,33 @@ def analyze_feedback():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
+@app.route('/procurement', methods=['POST'])
+def calculate_procurement():
+    try:
+        data = request.json
+        students = data.get('students', 0)
+
+        if not students or students <= 0:
+            return jsonify({"status": "error", "message": "Invalid student count"})
+
+        # Standard baseline multipliers per student (in kg or Liters)
+        # You can tweak these based on real mess metrics
+        procurement_data = [
+            {"name": "Rice (Basmati)", "qty": f"{round(students * 0.15, 1)} kg"},
+            {"name": "Yellow Dal", "qty": f"{round(students * 0.05, 1)} kg"},
+            {"name": "Mixed Vegetables", "qty": f"{round(students * 0.20, 1)} kg"},
+            {"name": "Cooking Oil", "qty": f"{round(students * 0.02, 1)} L"},
+            {"name": "Wheat Flour (Atta)", "qty": f"{round(students * 0.12, 1)} kg"}
+        ]
+
+        return jsonify({
+            "status": "success",
+            "data": procurement_data
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
 if __name__ == '__main__':
     # Get port from environment variable or use 5001 for local
     port = int(os.environ.get("PORT", 5001)) 

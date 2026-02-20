@@ -4,3 +4,4 @@ dist/
 venv/
 __pycache__/
 .DS_Store
+ai_engine/mess_waste_model.pkl
