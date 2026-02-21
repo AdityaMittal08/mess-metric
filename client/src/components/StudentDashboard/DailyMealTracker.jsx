@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Coffee, Sun, Sunset, Moon, Check, X, Loader2 } from "lucide-react";
+import { Coffee, Sun, Sunset, Moon, Check, X, Loader2, ScanFace } from "lucide-react"; 
 import axios from "axios";
 
+// ... (Keep your weeklyMenu exactly the same) ...
 const weeklyMenu = {
   Monday: [
     { type: "Breakfast", time: "07:30 - 09:30", menu: "Idli, Vada, Sambar, Chutney", calories: 400, icon: Coffee },
@@ -79,10 +80,7 @@ export function DailyMealTracker({user}) {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        // Attempt to fetch from backend
         const res = await axios.get(`${API_URL}/api/menu/today`);
-        
-        // Map backend response to tracker format. Adjust icons based on type.
         const icons = { Breakfast: Coffee, Lunch: Sun, Snacks: Sunset, Dinner: Moon };
         const fetchedMeals = res.data.data.map((meal, index) => ({
           id: meal._id || index,
@@ -90,12 +88,11 @@ export function DailyMealTracker({user}) {
           time: meal.time || "Scheduled",
           menu: meal.items.join(", "),
           icon: icons[meal.type] || Sun,
-          isEating: true // Default assumed attending until marked skipped
+          isEating: true
         }));
         setMealStatus(fetchedMeals);
       } catch (error) {
         console.warn("Failed to fetch menu, falling back to local state.");
-        // Basic fallback if backend isn't populated
         setMealStatus([
           { id: "b1", type: "Breakfast", time: "07:30 - 09:30", menu: "Idli, Vada, Sambar", icon: Coffee, isEating: true },
           { id: "l1", type: "Lunch", time: "12:30 - 14:30", menu: "Rajma Chawal, Mix Veg", icon: Sun, isEating: true },
@@ -110,29 +107,25 @@ export function DailyMealTracker({user}) {
   }, []);
   
   const toggleMeal = async (id, type, currentStatus) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Please log in to track meals.");
-      return;
-    }
-
     setIsUpdating(id);
     const newStatus = !currentStatus;
 
     try {
-      // Optimistic UI Update
+      // 1. Optimistic UI Update (change it immediately)
       setMealStatus((prevMeals) =>
         prevMeals.map((meal) => meal.id === id ? { ...meal, isEating: newStatus } : meal)
       );
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Call Backend
-      await axios.post(`${API_URL}/api/attendance/mark`, 
-        { 
-          mealType: type, 
-          status: newStatus ? "present" : "absent" 
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // 3. (Optional) Your real backend call is commented out below for later
+      /* const token = localStorage.getItem("token");
+      if (token) {
+        await axios.post(`${API_URL}/api/attendance/mark`, 
+          { mealType: type, status: newStatus ? "present" : "pending_verification" },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+      */
       
     } catch (error) {
       console.error("Failed to update attendance:", error);
@@ -140,7 +133,6 @@ export function DailyMealTracker({user}) {
       setMealStatus((prevMeals) =>
         prevMeals.map((meal) => meal.id === id ? { ...meal, isEating: currentStatus } : meal)
       );
-      alert("Network error. Could not update attendance.");
     } finally {
       setIsUpdating(null);
     }
@@ -184,7 +176,7 @@ export function DailyMealTracker({user}) {
               className={`relative rounded-2xl border transition-all duration-300 ${
                 meal.isEating 
                   ? "bg-white border-emerald-100 shadow-lg shadow-emerald-50" 
-                  : "bg-slate-50 border-slate-200 opacity-90"
+                  : "bg-amber-50/40 border-amber-200 shadow-md shadow-amber-50" // <--- CHANGED STYLING
               }`}
             >
               <div className="p-5">
@@ -225,18 +217,19 @@ export function DailyMealTracker({user}) {
                 </div>
               </div>
 
+              {/* 👇 UPDATED FOOTER TO SHOW PENDING STATUS 👇 */}
               <div className={`px-5 py-3 border-t rounded-b-2xl flex items-center justify-between text-xs font-medium ${
                 meal.isEating 
                   ? "bg-emerald-50/50 border-emerald-100 text-emerald-700" 
-                  : "bg-slate-100 border-slate-200 text-slate-500"
+                  : "bg-amber-100/50 border-amber-200 text-amber-700"
               }`}>
                 <div className="flex items-center gap-1.5">
-                  {meal.isEating ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                  {meal.isEating ? "Registered" : "Skipped"}
+                  {meal.isEating ? <Check className="w-3.5 h-3.5" /> : <ScanFace className="w-4 h-4 animate-pulse" />}
+                  {meal.isEating ? "Registered" : "Pending Biometric"}
                 </div>
                 {!meal.isEating && (
-                  <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
-                    + Coin Refund
+                  <span className="text-amber-700 bg-amber-200/60 px-2 py-0.5 rounded-full border border-amber-300 flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Awaiting
                   </span>
                 )}
               </div>

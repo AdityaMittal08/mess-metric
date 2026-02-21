@@ -508,3 +508,25 @@ export const mintMealCoins = async (contract, toAddress, amount) => {
     return false;
   }
 };
+
+// Function to BURN (spend) MealCoins
+export const burnMealCoins = async (contract, amount) => {
+  try {
+    const amountWei = ethers.parseUnits(amount.toString(), 18);
+    console.log(`Burning ${amount} MEAL...`);
+
+    // We use the same gas fix here so the transaction never gets stuck
+    const tx = await contract.burn(amountWei, {
+      maxPriorityFeePerGas: ethers.parseUnits("30", "gwei"),
+      maxFeePerGas: ethers.parseUnits("30", "gwei")
+    });
+
+    await tx.wait();
+
+    console.log("Burn successful! Tokens destroyed.");
+    return true;
+  } catch (error) {
+    console.error("Failed to burn tokens:", error);
+    return false;
+  }
+};
