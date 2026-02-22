@@ -4,9 +4,12 @@ const QRCode = require('qrcode');
 // Configure the email engine (Using Gmail for the hackathon demo)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
+    host: 'smtp.gmail.com', // Explicitly declare the host
+    port: 587,              // Use standard STARTTLS port instead of implicit SSL
+    secure: false,          // Required for port 587
     auth: {
-        user: process.env.EMAIL_USER, // e.g., innovit26.demo@gmail.com
-        pass: process.env.EMAIL_APP_PASSWORD // MUST be a Google App Password, not your normal password!
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_APP_PASSWORD
     }
 });
 
