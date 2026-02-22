@@ -76,7 +76,7 @@ app.use("/api/reviews", require("./routes/foodReview.routes"));
 app.use("/api/admin/auth", require("./routes/admin.auth.routes"));
 app.use("/api/attendance", require("./routes/attendance.routes"));
 app.use("/api/menu", require("./routes/menu.routes"));
-
+app.use("/api/rewards", require("./routes/reward.routes"));
 // Error Handling
 app.use((err, req, res, next) => {
   console.error("❌ Server Error:", err);
