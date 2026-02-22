@@ -131,8 +131,11 @@ export function StorePage() {
            // Provide a dummy txHash if the smart contract logic just returns boolean "true"
            const txHash = success.hash || `0x${Date.now().toString(16)}abcd1234efgh5678`;
 
-           await fetch('http://localhost:5000/api/rewards/claim', {
-               method: 'POST',
+        // 👇 THIS IS THE FIX: Use the cloud URL if on Vercel, or localhost if on your laptop
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        
+          await fetch(`${API_URL}/api/rewards/claim`, {
+              method: 'POST',
                headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify({
                    studentEmail: targetEmail,
