@@ -6,6 +6,7 @@ import { Download } from "lucide-react";
 import { Calculator } from "lucide-react";
 import { LiveWasteMonitor } from "./AdminDashboard/LiveWasteMonitor";
 import { 
+  MonitorPlay,
   LayoutDashboard, 
   Utensils, 
   BrainCircuit, 
@@ -392,10 +393,24 @@ export function AdminDashboardPage() {
                >
 
                 <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-800">Quick Actions</h3>
-                      <p className="text-sm text-gray-500">Manage your monthly analytics</p>
-                    </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">Quick Actions</h3>
+                  <p className="text-sm text-gray-500">Manage your monthly analytics</p>
+                </div>
+                
+                {/* Wrap the buttons in a flex container */}
+                <div className="flex gap-3">
+                    {/* NEW BUTTON: Launches KDS in a new tab */}
+                    {/* Add this inside the Quick Actions flex container in AdminDashboardPage.jsx */}
+                  <button 
+                    onClick={() => window.open('/kitchen-display', '_blank')}
+                    className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-900/20"
+                  >
+                    <MonitorPlay size={18} />
+                    <span>Launch KDS</span>
+                  </button>
+
+                    {/* EXISTING BUTTON */}
                     <button 
                       onClick={handleDownloadReport}
                       className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-900 transition-colors shadow-md"
@@ -403,7 +418,8 @@ export function AdminDashboardPage() {
                       <Download size={18} />
                       <span className="hidden sm:inline">Download Monthly Report</span>
                     </button>
-                 </div>
+                </div>
+            </div>
 
 
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
