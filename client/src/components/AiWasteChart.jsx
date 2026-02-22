@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion'; // Fixed the import to standard framer-motion
 
 const AiWasteChart = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 👇 MOVED OUTSIDE LOOP FOR SAFETY
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  // 👉 FIX 1: Changed fallback port to 5001 to match your Python app.py
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
   const getDayName = (offset) => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -22,14 +22,14 @@ const AiWasteChart = () => {
       const forecastData = [];
       const today = new Date().getDay();
 
-      // We loop 7 times for 7 days
       for (let i = 0; i < 7; i++) {
         const dayIndex = (today + i) % 7;
         const isWeekend = (dayIndex === 0 || dayIndex === 6) ? 1 : 0;
         const mockAttendance = Math.floor(1100 + Math.random() * 200);
 
         try {
-          const response = await axios.post(`${API_URL}/api/ai/predict`, {
+          // 👉 FIX 2: Changed route to exactly match your Flask @app.route('/predict')
+          const response = await axios.post(`${API_URL}/predict`, {
             attendance: mockAttendance,
             day_of_week: dayIndex,
             is_weekend: isWeekend,
@@ -38,15 +38,15 @@ const AiWasteChart = () => {
 
           forecastData.push({
             day: getDayName(i),
-            waste: parseFloat(response.data.data.predicted_waste_kg.toFixed(1)), 
+            // 👉 FIX 3: Removed the extra ".data" to correctly parse your Python JSON
+            waste: parseFloat(response.data.predicted_waste_kg.toFixed(1)), 
             attendance: mockAttendance
           });
         } catch (error) {
-          console.warn("AI Server busy, using fallback data for day", i);
-          // Fallback logic so graph doesn't break
+          console.warn("AI Server busy or offline, using fallback data for day", i);
           forecastData.push({ 
             day: getDayName(i), 
-            waste: isWeekend ? 35 + i : 45 + i, // Different values for variety
+            waste: isWeekend ? 35 + i : 45 + i,
             attendance: 1200 
           });
         }
@@ -115,7 +115,7 @@ const AiWasteChart = () => {
               dataKey="waste" 
               stroke="#10b981" 
               strokeWidth={3}
-              fillOpacity={0.2}  // 👈 CHANGED from 1 to 0.2 (Makes it transparent/pretty)
+              fillOpacity={0.2} 
               fill="url(#colorWaste)" 
               animationDuration={2000}
             />
