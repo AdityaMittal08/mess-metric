@@ -79,24 +79,37 @@ export function StorePage() {
         return;
     }
 
-    if (!contract || !walletAddress) {
-       alert("Blockchain connection error. Please refresh the page to reconnect.");
-       return;
-    }
-
-    if (parseFloat(balance) < item.price) {
-       alert(`Insufficient MealCoins. You need ${item.price} MEAL.`);
-       return;
-    }
-
     setProcessingId(item.id);
+
+    console.log("Forcing fresh Web3 network check...");
+    // 1. FORCE the network check every single time they click Buy
+    const connection = await connectToMealCoin(); 
+    
+    // If they are on Ethereum, the popup will appear here. 
+    // If they click 'Cancel' on the popup, it stops the purchase.
+    if (!connection) {
+       setProcessingId(null);
+       return; 
+    }
+
+    // 2. Fetch the absolute latest balance directly from the blockchain
+    const currentBalance = await getStudentBalance(connection.contract, connection.userAddress);
+    setBalance(currentBalance);
+
+    // 3. Check if they can afford it
+    if (parseFloat(currentBalance) < item.price) {
+       alert(`Insufficient MealCoins. You have ${currentBalance} MEAL, but need ${item.price} MEAL.`);
+       setProcessingId(null);
+       return;
+    }
+
     setPurchaseSuccess(null);
 
-    // Smart contract interaction
-    const success = await burnMealCoins(contract, item.price.toString());
+    // 4. Burn the coins using the freshly verified contract
+    const success = await burnMealCoins(connection.contract, item.price.toString());
 
     if (success) {
-       const newBalance = await getStudentBalance(contract, walletAddress);
+       const newBalance = await getStudentBalance(connection.contract, connection.userAddress);
        setBalance(newBalance);
        setPurchaseSuccess(item.name);
        

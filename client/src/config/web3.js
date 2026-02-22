@@ -443,6 +443,48 @@ const CONTRACT_ABI = [
 	}
 ];
 
+// 👉 NEW: Auto-Switcher Logic
+const switchToAmoy = async () => {
+  const targetChainId = '0x13882'; // 80002 in Hexadecimal
+
+  try {
+    // Try to switch to Polygon Amoy
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: targetChainId }],
+    });
+    return true;
+  } catch (switchError) {
+    // Error 4902 means the network is not added to MetaMask yet
+    if (switchError.code === 4902) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              chainId: targetChainId,
+              chainName: 'Polygon Amoy Testnet',
+              rpcUrls: ['https://rpc-amoy.polygon.technology'],
+              nativeCurrency: {
+                name: 'MATIC', // Keeping MATIC as the symbol to bypass the MetaMask bug
+                symbol: 'MATIC',
+                decimals: 18,
+              },
+              blockExplorerUrls: ['https://amoy.polygonscan.com/'],
+            },
+          ],
+        });
+        return true;
+      } catch (addError) {
+        console.error("Failed to add Amoy network:", addError);
+        return false;
+      }
+    }
+    console.error("Failed to switch network:", switchError);
+    return false;
+  }
+};
+
 export const connectToMealCoin = async () => {
   try {
     // Check if MetaMask is installed
@@ -451,14 +493,21 @@ export const connectToMealCoin = async () => {
       return null;
     }
 
-    // Prompt user to connect their MetaMask wallet
+    // 👉 1. Force the network switch FIRST before doing anything else
+    const isCorrectNetwork = await switchToAmoy();
+    if (!isCorrectNetwork) {
+       alert("You must switch to the Polygon Amoy network to use this app!");
+       return null;
+    }
+
+    // 2. Prompt user to connect their MetaMask wallet
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
 
-    // Create the live contract instance
+    // 3. Create the live contract instance
     const mealCoinContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-    console.log("Successfully connected to MealCoin!");
+    console.log("Successfully connected to MealCoin on Amoy!");
     
     return { 
       contract: mealCoinContract, 
