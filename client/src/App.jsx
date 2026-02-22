@@ -1,12 +1,12 @@
-import './App.css'
-import { LandingPage } from './components/LandingPage.jsx'
+import './App.css';
+import { LandingPage } from './components/LandingPage.jsx';
 import { LeaderboardPage } from './components/LeaderboardPage.jsx';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Login } from './components/Auth/login.jsx';
 import { Register } from './components/Auth/Register.jsx';
 import { StudentDashboardPage } from './components/StudentDashboardPage.jsx';
 import { StudentProfilePage } from './components/StudentProfilePage.jsx';
-import { ProtectedRoute } from './components/Auth/ProtectedRoute.jsx'; // <--- Import this
+import { ProtectedRoute } from './components/Auth/ProtectedRoute.jsx'; 
 import { AdminLogin } from './components/Auth/AdminLogin.jsx';
 import { AdminRegister } from './components/Auth/AdminRegister.jsx';
 import { AdminDashboardPage } from './components/AdminDashboardPage.jsx';
@@ -25,7 +25,6 @@ function App() {
           <Route path='/admin/login' element={<AdminLogin />} />
           <Route path='/admin/register' element={<AdminRegister />} />
           
-          {/* WRAP THE PROTECTED ROUTES LIKE THIS: */}
           <Route element={<ProtectedRoute />}>
              <Route path='/student/dashboard' element={<StudentDashboardPage />} />
              <Route path='/student/profile' element={<StudentProfilePage />} />
@@ -43,4 +42,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

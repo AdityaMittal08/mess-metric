@@ -1,17 +1,27 @@
 import { useState, useEffect } from 'react';
 import { Coins, ShoppingBag, ArrowRight, Sparkles, Gift } from 'lucide-react';
 import { Link } from 'react-router-dom';
+// 👉 NEW: Import Web3 functions
+import { connectToMealCoin, getStudentBalance } from '../../config/web3.js';
 
 const useCounter = (end, duration = 1500) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
     let start = 0;
-    const increment = end / (duration / 16);
+    // Parse string from blockchain ("90.0") into a number
+    const target = parseFloat(end) || 0; 
+    
+    if (target === 0) {
+      setCount(0);
+      return;
+    }
+
+    const increment = target / (duration / 16);
     const timer = setInterval(() => {
       start += increment;
-      if (start >= end) {
-        setCount(end);
+      if (start >= target) {
+        setCount(target);
         clearInterval(timer);
       } else {
         setCount(Math.ceil(start));
@@ -24,15 +34,29 @@ const useCounter = (end, duration = 1500) => {
 };
 
 export function CoinRedemptionCard({user}) {
-  const walletData = user ? {
-    coins: user.mealCoins,
-    expiringSoon: 0,
-  } : {
-    coins: 1,
-    expiringSoon: 0,
-  };
-  
-  const animatedCoins = useCounter(walletData.coins);
+  // 👉 NEW: State to hold the live blockchain balance
+  const [liveBalance, setLiveBalance] = useState("0");
+
+  useEffect(() => {
+    const fetchLiveBalance = async () => {
+      try {
+        const connection = await connectToMealCoin();
+        if (connection) {
+          const balance = await getStudentBalance(connection.contract, connection.userAddress);
+          setLiveBalance(balance);
+        }
+      } catch (error) {
+        console.error("Failed to fetch blockchain balance for card", error);
+      }
+    };
+
+    if (user) {
+      fetchLiveBalance();
+    }
+  }, [user]);
+
+  // Pass the live Web3 balance to your counter animation
+  const animatedCoins = useCounter(liveBalance);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 animate-in fade-in slide-in-from-bottom-10 duration-1000">
@@ -62,6 +86,7 @@ export function CoinRedemptionCard({user}) {
             <div className="bg-amber-100 p-3 rounded-full mb-3 shadow-[0_0_15px_rgba(251,191,36,0.5)]">
               <Coins className="w-8 h-8 text-amber-600 fill-amber-600" />
             </div>
+            {/* Displaying the animated live balance */}
             <div className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-amber-200 to-amber-500 tracking-tight">
               {animatedCoins}
             </div>

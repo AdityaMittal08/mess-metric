@@ -1,12 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { Leaf, Coins, Bell, User, LogOut, Settings, ChevronDown, Mail, Hash, Building2, X } from "lucide-react";
+import { Leaf, Coins, Bell, User, LogOut, Settings, ChevronDown, Mail, Hash, Building2, X, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+// ---> WEB3 IMPORTS <---
+import { connectToMealCoin, getStudentBalance } from "../../config/web3.js";
 
 export function StudentDashboardNavBar({user}) {
   const navigate = useNavigate();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  
+  // ---> LIVE WEB3 BALANCE STATE <---
+  const [web3Balance, setWeb3Balance] = useState("...");
 
   const [notifications, setNotifications] = useState([
     { 
@@ -27,13 +32,8 @@ export function StudentDashboardNavBar({user}) {
     setNotifications([]);
   };
 
-  // 👇 THIS IS THE FIX FOR THE "ZOMBIE DATA" BUG
   const handleLogout = () => {
-    // 1. Wipe the entire browser memory for this site (Token, User, Reviews, etc.)
     localStorage.clear();
-
-    // 2. Force a Hard Refresh to Login Page
-    // This ensures React completely resets, so User B never sees User A's data.
     window.location.href = "/login";
   };
 
@@ -73,6 +73,28 @@ export function StudentDashboardNavBar({user}) {
   const profileRef = useOutsideClick(() => setIsProfileOpen(false));
   const profileModalRef = useRef();
   
+  // ---> SILENTLY FETCH WEB3 BALANCE ON LOAD <---
+  useEffect(() => {
+    const fetchLiveBalance = async () => {
+      try {
+        const connection = await connectToMealCoin();
+        if (connection) {
+          const liveBalance = await getStudentBalance(connection.contract, connection.userAddress);
+          setWeb3Balance(liveBalance);
+        } else {
+          setWeb3Balance("0");
+        }
+      } catch (error) {
+        console.error("Failed to fetch blockchain balance", error);
+        setWeb3Balance("0");
+      }
+    };
+
+    if (user) {
+      fetchLiveBalance();
+    }
+  }, [user]);
+
   useEffect(() => {
     const handleClick = (event) => {
       if (profileModalRef.current && !profileModalRef.current.contains(event.target)) {
@@ -92,10 +114,10 @@ export function StudentDashboardNavBar({user}) {
   if (!user) {
     return <div className="p-4 text-gray-500">Loading tracker...</div>;
   }
+  
   const studentData = {
     name: user.name,
     rollNumber: user.registrationNo || '0',
-    mealCoins: user.mealCoins,
     email: user.email || 'Not provided',
     messName: user.messName || 'Not provided',
   };
@@ -116,9 +138,14 @@ export function StudentDashboardNavBar({user}) {
 
           <div className="flex items-center space-x-2 md:space-x-6">
             
+            {/* ---> LIVE BLOCKCHAIN BALANCE <--- */}
             <div className="flex items-center space-x-1 md:space-x-2 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200 shadow-sm">
               <Coins className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-600" />
-              <span className="font-bold text-amber-700 text-xs md:text-sm">{studentData.mealCoins}</span>
+              {web3Balance === "..." ? (
+                <Loader2 className="w-3.5 h-3.5 text-amber-600 animate-spin" />
+              ) : (
+                <span className="font-bold text-amber-700 text-xs md:text-sm">{web3Balance}</span>
+              )}
             </div>
 
             <div className="relative" ref={notifRef}>
@@ -281,7 +308,7 @@ export function StudentDashboardNavBar({user}) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-amber-600 uppercase tracking-wide font-medium mb-1">Meal Coins</p>
-                  <p className="text-lg font-bold text-amber-700">{studentData.mealCoins}</p>
+                  <p className="text-lg font-bold text-amber-700">{web3Balance}</p>
                 </div>
               </div>
             </div>
