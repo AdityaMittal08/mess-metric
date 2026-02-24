@@ -122,6 +122,34 @@ export function StorePage() {
            status: 'Completed'
        };
        setTransactions([newTx, ...transactions]);
+
+       // 👇 NEW: AUTOMATIC EMAIL TRIGGER 👇
+       try {
+           // Uses the user's logged-in email, or falls back to your email for testing
+           const targetEmail = user.email || "yashjee979@gmail.com"; 
+           const targetName = user.name || "Yash";
+           // Provide a dummy txHash if the smart contract logic just returns boolean "true"
+           const txHash = success.hash || `0x${Date.now().toString(16)}abcd1234efgh5678`;
+
+        // 👇 THIS IS THE FIX: Use the cloud URL if on Vercel, or localhost if on your laptop
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        
+          await fetch(`${API_URL}/api/rewards/claim`, {
+              method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                   studentEmail: targetEmail,
+                   studentName: targetName,
+                   itemName: item.name,
+                   transactionHash: txHash
+               })
+           });
+           console.log("Reward email triggered automatically.");
+       } catch (emailError) {
+           console.error("Failed to send reward email:", emailError);
+       }
+       // 👆 END EMAIL TRIGGER 👆
+
     } else {
        alert("Transaction failed or was rejected in MetaMask.");
     }
@@ -163,7 +191,7 @@ export function StorePage() {
                    </div>
                 </div>
                 
-                {/* 👇 NEW INLINE LOGOUT BUTTON FOR DEMO TESTING 👇 */}
+                {/* INLINE LOGOUT BUTTON */}
                 <button 
                   onClick={handleStoreLogout}
                   title="Sign Out"

@@ -114,6 +114,50 @@ def calculate_procurement():
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+    
+# --- NEW Route: 5-Day Forecast for the Dashboard Chart ---
+@app.route('/api/ai/forecast', methods=['GET'])
+def get_forecast():
+    try:
+        if not model:
+            # Fallback if your pkl file doesn't load
+            return jsonify({
+                "success": True, 
+                "data": {
+                    "insight": "AI Model offline. Showing baseline.",
+                    "chartData": [{"day": "Mon", "predictedWasteKg": 40}, {"day": "Tue", "predictedWasteKg": 42}, {"day": "Wed", "predictedWasteKg": 38}, {"day": "Thu", "predictedWasteKg": 45}, {"day": "Fri", "predictedWasteKg": 35}]
+                }
+            })
+
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+        # Simulating attendance drop-offs throughout the week for the demo
+        attendances = [1200, 1150, 1180, 1220, 1050] 
+        chart_data = []
+
+        for i in range(5):
+            # Features: ['day_of_week', 'is_weekend', 'is_special_event', 'attendance']
+            df = pd.DataFrame([[i, 0, 0, attendances[i]]], columns=['day_of_week', 'is_weekend', 'is_special_event', 'attendance'])
+            prediction = model.predict(df)[0]
+            
+            chart_data.append({
+                "day": days[i],
+                "predictedWasteKg": round(prediction, 1)
+            })
+
+        # Generate a dynamic insight based on your model's highest prediction
+        max_waste = max(chart_data, key=lambda x: x['predictedWasteKg'])
+        insight = f"ML Alert: Peak waste of {max_waste['predictedWasteKg']}kg expected on {max_waste['day']} due to high attendance. Adjust cooking volume."
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "insight": insight,
+                "chartData": chart_data
+            }
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == '__main__':
     # Get port from environment variable or use 5001 for local

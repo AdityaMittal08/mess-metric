@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+// load environment variables from project root
 require("dotenv").config();
 
 // Import Routes
@@ -76,6 +77,10 @@ app.use("/api/reviews", require("./routes/foodReview.routes"));
 app.use("/api/admin/auth", require("./routes/admin.auth.routes"));
 app.use("/api/attendance", require("./routes/attendance.routes"));
 app.use("/api/menu", require("./routes/menu.routes"));
+app.use("/api/rewards", require("./routes/reward.routes"));
+
+// meal skip requests
+app.use("/api/meals", require("./routes/skip.routes"));
 
 // Error Handling
 app.use((err, req, res, next) => {
