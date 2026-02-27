@@ -117,18 +117,25 @@ export function DailyMealTracker({user}) {
       );
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      // 3. (Optional) Your real backend call is commented out below for later
-      /* const token = localStorage.getItem("token");
-      if (token) {
-        await axios.post(`${API_URL}/api/attendance/mark`, 
-          { mealType: type, status: newStatus ? "present" : "pending_verification" },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+      // 2. If user is toggling OFF (newStatus = false), submit skip request
+      if (!newStatus) {
+        const token = localStorage.getItem("token");
+        if (token) {
+          try {
+            const response = await axios.post(
+              `${API_URL}/api/meals/skip`,
+              { mealType: type },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            console.log("Skip request submitted:", response.data);
+          } catch (error) {
+            console.error("Failed to submit skip request:", error.response?.data || error.message);
+          }
+        }
       }
-      */
       
     } catch (error) {
-      console.error("Failed to update attendance:", error);
+      console.error("Failed to update meal status:", error);
       // Revert UI on failure
       setMealStatus((prevMeals) =>
         prevMeals.map((meal) => meal.id === id ? { ...meal, isEating: currentStatus } : meal)

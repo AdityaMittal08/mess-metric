@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { User, Mail, Hash, Building2, Coins, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { StudentDashboardNavBar } from "./StudentDashboard/StudentDashboardNavBar";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -27,7 +30,28 @@ export function StudentProfilePage() {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsed = JSON.parse(storedUser);
+      setUser(parsed);
+
+      // Refresh user's latest data (mealCoins etc.) from server
+      const token = localStorage.getItem("token");
+      if (token) {
+        (async () => {
+          try {
+            const res = await axios.get(`${API_URL}/api/meals/my-requests`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (res.data?.success && res.data.data?.student) {
+              const updated = { ...parsed, mealCoins: res.data.data.student.mealCoins };
+              setUser(updated);
+              localStorage.setItem("user", JSON.stringify(updated));
+            }
+          } catch (err) {
+            console.warn("Failed to refresh user data:", err?.response?.data || err.message);
+          }
+        })();
+      }
     }
   }, []);
 

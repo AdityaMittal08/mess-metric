@@ -8,6 +8,7 @@ const authRoutes = require("./routes/auth.routes");
 const leaderboardRoutes = require("./routes/leaderboard.routes");
 const aiRoutes = require("./routes/ai.routes");
 const reportRoutes = require("./routes/report.routes");
+const skipRoutes = require("./routes/skip.routes");
 const connectDB = require("./config/db");
 
 const app = express();
@@ -68,6 +69,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/meals", skipRoutes);
 
 // 👇 THIS WAS MISSING! ADD THIS LINE:
 app.use("/api/food-reviews", require("./routes/foodReview.routes")); 

@@ -7,7 +7,7 @@ import { connectToMealCoin, mintMealCoins } from "../config/web3.js";
 import { LiveWasteMonitor } from "./AdminDashboard/LiveWasteMonitor";
 import { 
   LayoutDashboard, Utensils, BrainCircuit, LogOut, Users, TrendingUp, AlertTriangle,
-  Leaf, ChevronRight, Loader2, Edit, MessageSquare, ThumbsUp, ThumbsDown, CheckCircle,
+  Leaf, ChevronRight, Loader2, Edit, MessageSquare, ThumbsUp, ThumbsDown, CheckCircle, Check,
   Clock, Send, Star, Menu, X, Coins, ScanFace, Download, Calculator
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -36,6 +36,10 @@ export function AdminDashboardPage() {
   const [menu, setMenu] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [pendingApprovals, setPendingApprovals] = useState([]);
+
+  // menu editing state
+  const [isEditingMenu, setIsEditingMenu] = useState(false);
+  const [editableMenu, setEditableMenu] = useState([]);
 
   // Web3 States
   const [adminContract, setAdminContract] = useState(null);
@@ -109,36 +113,36 @@ export function AdminDashboardPage() {
   }, [navigate]);
 
   const handleApproveAndMint = async (request) => {
-    let currentContract = adminContract;
-    let currentWallet = adminWallet;
-
-    if (!currentContract) {
-        const connection = await connectToMealCoin();
-        if (connection) {
-            setAdminContract(connection.contract);
-            setAdminWallet(connection.userAddress);
-            currentContract = connection.contract;
-        } else return;
-    }
-
     setProcessingId(request.id);
-    const success = await mintMealCoins(currentContract, request.walletAddress, "100");
 
-    if (success) {
-        try {
-          const token = localStorage.getItem('token');
-          // Hit backend to mark meal skip as fully approved & rewarded
-          await axios.put(`${API_URL}/api/meals/${request.id}/approve`, {}, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setPendingApprovals(prev => prev.map(req => req.id === request.id ? { ...req, status: "approved" } : req));
-        } catch (err) {
-          console.error("Backend sync failed for approval", err);
-        }
-    } else {
-        alert("Transaction failed or was rejected.");
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Call backend to approve skip request and award coins
+      const response = await axios.put(
+        `${API_URL}/api/meals/${request.id}/approve`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        // Show success message
+        const studentName = response.data.data.student.name;
+        const coinsAwarded = 50; // Match the backend constant
+        alert(`✅ Approved! ${coinsAwarded} coins awarded to ${studentName}`);
+
+        // Remove the approved request from the list
+        setPendingApprovals(prev => prev.filter(req => req.id !== request.id));
+
+        console.log("Skip request approved successfully:", response.data);
+      }
+    } catch (error) {
+      console.error("Error approving request:", error);
+      const errorMsg = error.response?.data?.message || "Failed to approve request. Please try again.";
+      alert(`❌ ${errorMsg}`);
+    } finally {
+      setProcessingId(null);
     }
-    setProcessingId(null);
   };
 
   const handleAiPrediction = async () => {
@@ -177,6 +181,50 @@ export function AdminDashboardPage() {
       alert("Report generation is not available right now.");
     }
   };
+
+  // ---------- MENU EDITING HANDLERS ----------
+  const handleEditMenu = () => {
+    setEditableMenu(menu.map(d => ({...d}))); // shallow copy
+    setIsEditingMenu(true);
+  };
+
+  const handleMenuChange = (dayIdx, key, value) => {
+    setEditableMenu(prev => {
+      const next = [...prev];
+      next[dayIdx] = { ...next[dayIdx], [key]: value };
+      return next;
+    });
+  };
+
+  const handleSaveMenu = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      // convert editableMenu to backend format
+      const weeklyMenu = editableMenu.map(day => ({
+        day: day.day,
+        meals: [
+          { type: "Breakfast", menu: day.breakfast },
+          { type: "Lunch", menu: day.lunch },
+          { type: "Snacks", menu: day.snacks },
+          { type: "Dinner", menu: day.dinner }
+        ]
+      }));
+
+      const res = await axios.put(`${API_URL}/api/menu`, { weeklyMenu }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        alert("Menu updated successfully.");
+        // update displayed menu
+        setMenu(editableMenu.map(d=>({...d})));
+        setIsEditingMenu(false);
+      }
+    } catch (err) {
+      console.error("Failed to update menu:", err);
+      alert("Failed to save menu. See console for details.");
+    }
+  };
+
 
   const handleProcurement = async () => {
     setIsCalculatingProcurement(true);
@@ -438,34 +486,34 @@ export function AdminDashboardPage() {
                           ) : pendingApprovals.map((req) => (
                              <tr key={req.id} className="hover:bg-gray-50 transition-colors">
                                <td className="p-4">
-                                 <p className="font-bold text-gray-800">{req.name || req.studentId?.name || "Student"}</p>
+                                 <p className="font-bold text-gray-800">{req.student || req.studentId?.name || "Student"}</p>
                                  <p className="text-xs text-gray-500">{req.regNo || req.studentId?.regNo}</p>
                                </td>
-                               <td className="p-4 font-medium text-gray-700">{req.mealSkipped || req.mealType}</td>
+                               <td className="p-4 font-medium text-gray-700">{req.mealType}</td>
                                <td className="p-4">
-                                 {req.status === "pending" ? (
+                                 {req.status === "Pending" ? (
                                    <span className="flex items-center gap-1.5 text-amber-600 bg-amber-50 px-3 py-1 rounded-full text-xs font-bold w-max border border-amber-200">
-                                     <ScanFace size={14} className="animate-pulse" /> Pending Scan
+                                     <ScanFace size={14} className="animate-pulse" /> Pending Review
                                    </span>
                                  ) : (
                                    <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold w-max border border-emerald-200">
-                                     <CheckCircle size={14} /> Scan Verified
+                                     <CheckCircle size={14} /> Approved
                                    </span>
                                  )}
                                </td>
                                <td className="p-4">
-                                 {req.status === "pending" ? (
+                                 {req.status === "Pending" ? (
                                     <button
                                       onClick={() => handleApproveAndMint(req)}
                                       disabled={processingId === req.id}
-                                      className="flex items-center justify-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-900 transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed w-44"
+                                      className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed w-48"
                                     >
                                       {processingId === req.id ? <Loader2 size={16} className="animate-spin" /> : <Coins size={16} />}
-                                      {processingId === req.id ? "Minting..." : "Approve & Mint"}
+                                      {processingId === req.id ? "Approving..." : "Approve & Award 50🪙"}
                                     </button>
                                  ) : (
-                                    <button disabled className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-lg text-sm font-bold w-44 border border-emerald-200">
-                                      Reward Sent
+                                    <button disabled className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 px-4 py-2 rounded-lg text-sm font-bold w-48 border border-emerald-200 cursor-default">
+                                      <CheckCircle size={16} /> Coins Awarded
                                     </button>
                                  )}
                                </td>
@@ -486,10 +534,30 @@ export function AdminDashboardPage() {
                          <h3 className="text-lg font-bold text-[#1e3a8a]">Weekly Menu Configuration</h3>
                          <p className="text-sm text-gray-500">Managing menu for {messName}</p>
                        </div>
-                       <button className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 transition-colors shadow-lg shadow-blue-900/20 w-full md:w-auto justify-center">
-                         <Edit size={16} />
-                         Edit Menu
-                       </button>
+                       {isEditingMenu ? (
+                        <div className="flex gap-2 w-full md:w-auto">
+                          <button
+                            onClick={handleSaveMenu}
+                            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-lg w-full md:w-auto justify-center"
+                          >
+                            <Check /> Save
+                          </button>
+                          <button
+                            onClick={() => setIsEditingMenu(false)}
+                            className="flex items-center gap-2 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-400 transition-colors shadow-lg w-full md:w-auto justify-center"
+                          >
+                            <X /> Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={handleEditMenu}
+                          className="flex items-center gap-2 bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 transition-colors shadow-lg shadow-blue-900/20 w-full md:w-auto justify-center"
+                        >
+                          <Edit size={16} />
+                          Edit Menu
+                        </button>
+                      )}
                     </div>
                     <div className="p-0 overflow-x-auto">
                       <table className="w-full text-left border-collapse min-w-[800px]">
@@ -506,7 +574,44 @@ export function AdminDashboardPage() {
                         <tbody className="divide-y divide-gray-100">
                           {menu.length === 0 ? (
                             <tr><td colSpan="6" className="p-6 text-center text-gray-500">No menu data available.</td></tr>
-                          ) : menu.map((day, idx) => (
+                          ) : (isEditingMenu ? editableMenu.map((day, idx) => (
+                             <tr key={idx} className="hover:bg-blue-50/40 transition-colors group">
+                               <td className="p-4 font-bold text-[#1e3a8a]">{day.day}</td>
+                               <td className="p-4 text-sm text-gray-600 group-hover:text-gray-900">
+                                 <input
+                                   type="text"
+                                   value={day.breakfast}
+                                   onChange={e => handleMenuChange(idx, 'breakfast', e.target.value)}
+                                   className="w-full border border-gray-300 rounded px-2 py-1" />
+                               </td>
+                               <td className="p-4 text-sm text-gray-600 group-hover:text-gray-900">
+                                 <input
+                                   type="text"
+                                   value={day.lunch}
+                                   onChange={e => handleMenuChange(idx, 'lunch', e.target.value)}
+                                   className="w-full border border-gray-300 rounded px-2 py-1" />
+                               </td>
+                               <td className="p-4 text-sm text-gray-600 group-hover:text-gray-900">
+                                 <input
+                                   type="text"
+                                   value={day.snacks}
+                                   onChange={e => handleMenuChange(idx, 'snacks', e.target.value)}
+                                   className="w-full border border-gray-300 rounded px-2 py-1" />
+                               </td>
+                               <td className="p-4 text-sm text-gray-600 group-hover:text-gray-900">
+                                 <input
+                                   type="text"
+                                   value={day.dinner}
+                                   onChange={e => handleMenuChange(idx, 'dinner', e.target.value)}
+                                   className="w-full border border-gray-300 rounded px-2 py-1" />
+                               </td>
+                               <td className="p-4">
+                                 <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold border border-amber-200">
+                                   Editing
+                                 </span>
+                               </td>
+                             </tr>
+                          )) : menu.map((day, idx) => (
                              <tr key={idx} className="hover:bg-blue-50/40 transition-colors group">
                                <td className="p-4 font-bold text-[#1e3a8a]">{day.day}</td>
                                <td className="p-4 text-sm text-gray-600 group-hover:text-gray-900">{day.breakfast}</td>
@@ -519,7 +624,7 @@ export function AdminDashboardPage() {
                                  </span>
                                </td>
                              </tr>
-                          ))}
+                          )))}
                         </tbody>
                       </table>
                     </div>

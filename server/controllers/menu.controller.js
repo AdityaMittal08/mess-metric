@@ -105,26 +105,53 @@ exports.updateMenu = async (req, res) => {
       return res.status(400).json({ success: false, message: "weeklyMenu array is required" });
     }
 
+    // Ensure every meal entry includes required fields (time/calories)
+    const sanitizeMenu = (inputMenu, existingDoc) => {
+      return inputMenu.map(day => {
+        const existingDay = existingDoc && existingDoc.weeklyMenu
+          ? existingDoc.weeklyMenu.find(d => d.day === day.day)
+          : null;
+        const meals = [];
+        (day.meals || []).forEach(m => {
+          const existingMeal = existingDay
+            ? existingDay.meals.find(em => em.type === m.type)
+            : null;
+          meals.push({
+            type: m.type,
+            menu: m.menu || (existingMeal ? existingMeal.menu : ""),
+            time: m.time || (existingMeal ? existingMeal.time : "") || "TBD",
+            calories: m.calories != null ? m.calories : (existingMeal ? existingMeal.calories : 0)
+          });
+        });
+        return {
+          day: day.day,
+          meals
+        };
+      });
+    };
+
     // Either update existing doc or create new one
     let menuDoc = await Menu.findOne();
     if (!menuDoc) {
-      menuDoc = await Menu.create({ weeklyMenu });
+      const cleaned = sanitizeMenu(weeklyMenu, null);
+      menuDoc = await Menu.create({ weeklyMenu: cleaned });
     } else {
-      menuDoc.weeklyMenu = weeklyMenu;
+      const cleaned = sanitizeMenu(weeklyMenu, menuDoc);
+      menuDoc.weeklyMenu = cleaned;
       menuDoc.updatedAt = Date.now();
       await menuDoc.save();
     }
 
     const weeklyMenuObj = buildWeeklyMenuObject(menuDoc.weeklyMenu);
     // also return array format for consistency with getFullMenu
-  const menuArray = menuDoc.weeklyMenu.map(d => {
-    const entry = { day: d.day };
-    d.meals.forEach(m => {
-      entry[m.type.toLowerCase()] = m.menu;
+    const menuArray = menuDoc.weeklyMenu.map(d => {
+      const entry = { day: d.day };
+      d.meals.forEach(m => {
+        entry[m.type.toLowerCase()] = m.menu;
+      });
+      return entry;
     });
-    return entry;
-  });
-  res.json({ success: true, weeklyMenu: weeklyMenuObj, data: menuArray, updatedAt: menuDoc.updatedAt });
+    res.json({ success: true, weeklyMenu: weeklyMenuObj, data: menuArray, updatedAt: menuDoc.updatedAt });
   } catch (err) {
     console.error("updateMenu error:", err);
     res.status(500).json({ success: false, message: "Failed to update menu" });

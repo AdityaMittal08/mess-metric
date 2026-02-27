@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema({
   mealCoins: { 
     type: Number, 
     default: 0 
+  },
+  walletAddress: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true
