@@ -150,21 +150,21 @@ exports.approveSkipRequest = async (req, res) => {
     const { id } = req.params;
     const SKIP_REWARD_COINS = 50; // Coins awarded for approved skip request
 
-    // Find and update the skip request
+    // 1. Find and update the skip request status
     const skipRequest = await SkipRequest.findByIdAndUpdate(
       id,
       { status: "Approved" },
       { new: true }
-    ).populate("studentId", "name registrationNo email walletAddress mealCoins");
+    );
 
     if (!skipRequest) {
       return res.status(404).json({ success: false, message: "Skip request not found" });
     }
 
-    // Update student's mealCoins
+    // 2. SAFELY update student's mealCoins using MongoDB's $inc operator
     const student = await User.findByIdAndUpdate(
-      skipRequest.studentId._id,
-      { mealCoins: (skipRequest.studentId.mealCoins || 0) + SKIP_REWARD_COINS },
+      skipRequest.studentId,
+      { $inc: { mealCoins: SKIP_REWARD_COINS } }, 
       { new: true }
     );
 
@@ -194,4 +194,3 @@ exports.approveSkipRequest = async (req, res) => {
     });
   }
 };
-

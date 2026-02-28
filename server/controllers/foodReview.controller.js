@@ -28,6 +28,7 @@ exports.createReview = async (req, res) => {
       });
     }
 
+    // 1. Create the review
     const review = await FoodReview.create({
       user: req.user.id,
       mealType,
@@ -37,12 +38,12 @@ exports.createReview = async (req, res) => {
       aiAnalysis: aiAnalysis || null
     });
 
-    // Add +5 coins to user (as shown in UI)
-    const user = await User.findById(req.user.id);
-    if (user) {
-      user.mealCoins = (user.mealCoins || 0) + 5;
-      await user.save();
-    }
+    // 2. SAFELY add +5 coins using MongoDB's $inc operator
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $inc: { mealCoins: 5 } },
+      { new: true } // Returns the updated user document
+    );
 
     res.status(201).json({
       success: true,

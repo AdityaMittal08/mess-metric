@@ -44,7 +44,8 @@ export function Login() {
     }, 3000);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'https://mess-metric-api.onrender.com';
+      // 👇 CHANGED: Fallback is now your local server instead of Render
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const port = `${API_URL}/api/auth/login`;
       
       console.log("Attempting login...");

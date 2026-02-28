@@ -83,8 +83,8 @@ export function LeaderboardContent() {
                   <Medal className="w-8 h-8 text-slate-400" />
                 </div>
                 <div className="bg-slate-300 text-slate-700 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl mb-3 shadow-inner">2</div>
-                <h3 className="font-bold text-slate-800 line-clamp-1 text-sm md:text-base">{topThree[1]?.name}</h3>
-                <p className="text-sm font-black text-emerald-600 mt-2 flex items-center gap-1"><Coins className="w-3 h-3"/> {topThree[1]?.mealCoins}</p>
+                <h3 className="font-bold text-slate-800 line-clamp-1 text-sm md:text-base">{topThree[1]?.name || "Unknown"}</h3>
+                <p className="text-sm font-black text-emerald-600 mt-2 flex items-center gap-1"><Coins className="w-3 h-3"/> {topThree[1]?.mealCoins || 0}</p>
               </motion.div>
 
               {/* Rank 1: Gold */}
@@ -95,11 +95,11 @@ export function LeaderboardContent() {
                   <Crown className="w-10 h-10 text-white drop-shadow-md" />
                 </div>
                 <div className="bg-yellow-400 text-yellow-900 w-16 h-16 rounded-full flex items-center justify-center font-black text-3xl mb-3 shadow-inner ring-4 ring-yellow-200">1</div>
-                <h3 className="font-black text-slate-900 text-base md:text-lg line-clamp-1">{topThree[0]?.name}</h3>
+                <h3 className="font-black text-slate-900 text-base md:text-lg line-clamp-1">{topThree[0]?.name || "Unknown"}</h3>
                 <p className="text-lg font-black text-emerald-600 mt-2 flex items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm">
-                  <Coins className="w-4 h-4"/> {topThree[0]?.mealCoins}
+                  <Coins className="w-4 h-4"/> {topThree[0]?.mealCoins || 0}
                 </p>
-                <div className="text-xs font-bold text-amber-700 mt-3 bg-amber-100 px-2 py-1 rounded-md">👑 Top Saver</div>
+                <div className="text-xs font-bold text-amber-700 mt-3 bg-amber-100 px-2 py-1 rounded-md">⭐ Top Saver</div>
               </motion.div>
 
               {/* Rank 3: Bronze */}
@@ -110,8 +110,8 @@ export function LeaderboardContent() {
                   <Medal className="w-8 h-8 text-orange-500" />
                 </div>
                 <div className="bg-orange-300 text-orange-800 w-12 h-12 rounded-full flex items-center justify-center font-black text-xl mb-3 shadow-inner">3</div>
-                <h3 className="font-bold text-slate-800 line-clamp-1 text-sm md:text-base">{topThree[2]?.name}</h3>
-                <p className="text-sm font-black text-emerald-600 mt-2 flex items-center gap-1"><Coins className="w-3 h-3"/> {topThree[2]?.mealCoins}</p>
+                <h3 className="font-bold text-slate-800 line-clamp-1 text-sm md:text-base">{topThree[2]?.name || "Unknown"}</h3>
+                <p className="text-sm font-black text-emerald-600 mt-2 flex items-center gap-1"><Coins className="w-3 h-3"/> {topThree[2]?.mealCoins || 0}</p>
               </motion.div>
 
             </div>
@@ -123,12 +123,15 @@ export function LeaderboardContent() {
               {listItems.length > 0 ? (
                 listItems.map((student, index) => {
                   const studentRank = isFirstPage ? index + 4 : (currentPage - 1) * itemsPerPage + index + 1;
-                  const estimatedMeals = Math.floor(student.mealCoins / 10);
+                  
+                  // SAFETY CHECK: Ensure mealCoins defaults to 0 to prevent NaN errors
+                  const currentCoins = student.mealCoins || 0;
+                  const estimatedMeals = Math.floor(currentCoins / 10);
                   const estimatedCO2 = (estimatedMeals * 0.8).toFixed(1);
 
                   return (
                     <motion.div
-                      key={studentRank} 
+                      key={student._id || studentRank} 
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -147,7 +150,7 @@ export function LeaderboardContent() {
                         </div>
 
                         <div>
-                          <div className="font-bold text-slate-800 capitalize text-base md:text-lg">{student.name}</div>
+                          <div className="font-bold text-slate-800 capitalize text-base md:text-lg">{student.name || "Student"}</div>
                           <div className="text-xs text-slate-500 font-medium">{student.email}</div>
                         </div>
                       </div>
@@ -163,7 +166,7 @@ export function LeaderboardContent() {
                           <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mt-1">CO₂ Reduced</div>
                         </div>
                         <div className="text-right md:text-center bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
-                          <div className="font-black text-emerald-600 text-lg">{student.mealCoins}</div>
+                          <div className="font-black text-emerald-600 text-lg">{currentCoins}</div>
                           <div className="text-[10px] uppercase tracking-wider text-emerald-700/60 font-bold">Coins</div>
                         </div>
                       </div>

@@ -688,39 +688,6 @@ export function AdminDashboardPage() {
                       </div>
                    </div>
 
-                   <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-                      <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
-                        <div className="flex-1">
-                          <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Calculator /> Smart Procurement</h2>
-                          <p className="text-slate-300 mb-6 text-sm">Input the expected student footfall to instantly generate the raw material requirements for the day.</p>
-                          <div className="flex gap-4">
-                             <input type="number" value={procurementStudents} onChange={(e) => setProcurementStudents(Number(e.target.value))} className="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500 w-32 font-bold" />
-                             <button onClick={handleProcurement} disabled={isCalculatingProcurement} className="bg-emerald-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-600 transition-colors flex items-center gap-2">
-                               {isCalculatingProcurement ? <Loader2 className="animate-spin" size={18} /> : null} Calculate Needs
-                             </button>
-                          </div>
-                        </div>
-                        {procurementData && (
-                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 w-full bg-slate-800 rounded-xl p-4 border border-slate-700 max-h-60 overflow-y-auto">
-                            <table className="w-full text-left text-sm">
-                               <thead>
-                                 <tr className="text-slate-400 border-b border-slate-700">
-                                   <th className="pb-2">Ingredient</th><th className="pb-2 text-right">Qty</th>
-                                 </tr>
-                               </thead>
-                               <tbody>
-                                 {procurementData.map((item, idx) => (
-                                   <tr key={idx} className="border-b border-slate-700/50">
-                                     <td className="py-2 font-medium">{item.name}</td>
-                                     <td className="py-2 text-right text-emerald-400 font-bold">{item.qty}</td>
-                                   </tr>
-                                 ))}
-                               </tbody>
-                            </table>
-                          </motion.div>
-                        )}
-                      </div>
-                   </div>
                 </motion.div>
              )}
 
